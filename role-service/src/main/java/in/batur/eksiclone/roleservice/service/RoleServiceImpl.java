@@ -2,6 +2,7 @@ package in.batur.eksiclone.roleservice.service;
 
 import in.batur.eksiclone.entity.Role;
 import in.batur.eksiclone.repository.RoleRepository;
+import in.batur.eksiclone.repository.UserRepository;
 import in.batur.eksiclone.roleservice.exception.RoleNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,17 +18,20 @@ import java.util.stream.Collectors;
 public class RoleServiceImpl implements RoleService {
     @Autowired
     private RoleRepository roleRepository;
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private RoleMapper roleMapper;
 
     @Override
     public List<RoleDTO> findAll() {
         log.info("Fetching all roles");
         List<Role> roles = roleRepository.findAll();
-        List<RoleDTO> roleDTOs = roles.stream().map(role -> {
-            RoleDTO dto = new RoleDTO();
-            dto.setId(role.getId());
-            dto.setRoleName(role.getRoleName());
-            return dto;
-        }).collect(Collectors.toList());
+        List<RoleDTO> roleDTOs = roles.stream()
+            .map(roleMapper::toDto)
+            .collect(Collectors.toList());
         log.info("Found {} roles", roleDTOs.size());
         return roleDTOs;
     }
@@ -37,10 +41,7 @@ public class RoleServiceImpl implements RoleService {
         log.info("Fetching role with id {}", id);
         Role role = roleRepository.findById(id)
             .orElseThrow(() -> new RoleNotFoundException("Role not found with id: " + id));
-        RoleDTO dto = new RoleDTO();
-        dto.setId(role.getId());
-        dto.setRoleName(role.getRoleName());
-        return dto;
+        return roleMapper.toDto(role);
     }
 
     @Override
@@ -49,13 +50,10 @@ public class RoleServiceImpl implements RoleService {
         if (roleRepository.findByRoleName(roleDTO.getRoleName()).isPresent()) {
             throw new IllegalArgumentException("Role name already exists: " + roleDTO.getRoleName());
         }
-        Role role = new Role();
-        role.setRoleName(roleDTO.getRoleName());
+        
+        Role role = roleMapper.toEntity(roleDTO);
         Role savedRole = roleRepository.save(role);
-        RoleDTO responseDTO = new RoleDTO();
-        responseDTO.setId(savedRole.getId());
-        responseDTO.setRoleName(savedRole.getRoleName());
-        return responseDTO;
+        return roleMapper.toDto(savedRole);
     }
 
     @Override
@@ -63,24 +61,30 @@ public class RoleServiceImpl implements RoleService {
         log.info("Updating role with id {}", roleDTO.getId());
         Role role = roleRepository.findById(roleDTO.getId())
             .orElseThrow(() -> new RoleNotFoundException("Role not found with id: " + roleDTO.getId()));
+        
         if (!role.getRoleName().equals(roleDTO.getRoleName()) && 
             roleRepository.findByRoleName(roleDTO.getRoleName()).isPresent()) {
             throw new IllegalArgumentException("Role name already exists: " + roleDTO.getRoleName());
         }
-        role.setRoleName(roleDTO.getRoleName());
+        
+        roleMapper.updateEntity(roleDTO, role);
         Role updatedRole = roleRepository.save(role);
-        RoleDTO responseDTO = new RoleDTO();
-        responseDTO.setId(updatedRole.getId());
-        responseDTO.setRoleName(updatedRole.getRoleName());
-        return responseDTO;
+        return roleMapper.toDto(updatedRole);
     }
 
     @Override
     public void deleteRole(Long id) {
         log.info("Deleting role with id {}", id);
-        if (!roleRepository.existsById(id)) {
-            throw new RoleNotFoundException("Role not found with id: " + id);
+        Role role = roleRepository.findById(id)
+            .orElseThrow(() -> new RoleNotFoundException("Role not found with id: " + id));
+        
+        // Check if any users have this role before deleting
+        long userCount = userRepository.countByRoleId(id);
+        if (userCount > 0) {
+            throw new IllegalStateException("Cannot delete role: " + role.getRoleName() + 
+                ". It is assigned to " + userCount + " user(s).");
         }
+        
         roleRepository.deleteById(id);
     }
 }

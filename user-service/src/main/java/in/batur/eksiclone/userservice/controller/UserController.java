@@ -21,13 +21,13 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @Operation(summary = "Get all users", description = "Returns a list of all users with their details")
+    @Operation(summary = "Get all users", description = "Returns a list of all users with their details excluding passwords")
     @GetMapping
     public List<UserDTO> findAll() {
         return userService.findAll();
     }
 
-    @Operation(summary = "Get a user by ID", description = "Returns the details of a user with the specified ID")
+    @Operation(summary = "Get a user by ID", description = "Returns the details of a user with the specified ID excluding password")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "User found"),
         @ApiResponse(responseCode = "404", description = "User not found")
@@ -38,10 +38,13 @@ public class UserController {
         return ResponseEntity.ok(userDTO);
     }
 
-    @Operation(summary = "Create a new user", description = "Creates a new user with the provided details")
+    @Operation(summary = "Create a new user", 
+               description = "Creates a new user with the provided details. " +
+                             "Username and email must be unique. " +
+                             "The roles must already exist in the system.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "User created successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid user data")
+        @ApiResponse(responseCode = "400", description = "Invalid user data, duplicate username/email, or role not found")
     })
     @PostMapping
     public ResponseEntity<UserDTO> createUser(@Valid @RequestBody UserDTO userDTO) {
@@ -49,11 +52,15 @@ public class UserController {
         return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Update a user", description = "Updates the details of a user with the specified ID")
+    @Operation(summary = "Update a user", 
+               description = "Updates the details of a user with the specified ID. " +
+                             "Username and email must remain unique. " +
+                             "The password will only be updated if provided in the request. " +
+                             "The roles must already exist in the system.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "User updated successfully"),
         @ApiResponse(responseCode = "404", description = "User not found"),
-        @ApiResponse(responseCode = "400", description = "Invalid user data")
+        @ApiResponse(responseCode = "400", description = "Invalid user data, duplicate username/email, or role not found")
     })
     @PutMapping("/{id}")
     public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @Valid @RequestBody UserDTO userDTO) {
@@ -62,7 +69,7 @@ public class UserController {
         return ResponseEntity.ok(updatedUser);
     }
 
-    @Operation(summary = "Delete a user", description = "Deletes a user with the specified ID")
+    @Operation(summary = "Delete a user", description = "Permanently deletes a user with the specified ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "User deleted successfully"),
         @ApiResponse(responseCode = "404", description = "User not found")

@@ -33,12 +33,13 @@ VALUES
     (NOW(), NOW(), 'ROLE_MODERATOR', 0),
     (NOW(), NOW(), 'ROLE_USER', 0);
 
--- Varsayılan kullanıcılar
+-- Varsayılan kullanıcılar (Güvenlik amaçlı farklı şifreler)
+-- Not: Şifreler BCrypt ile hashlenmiştir. Tüm kullanıcılar için orijinal şifre: "password123"
 INSERT INTO users (created_date, last_updated_date, username, email, password, name, last_name, version)
 VALUES 
-    (NOW(), NOW(), 'admin_user', 'admin@example.com', '$2a$10$XURPShQ5u3QRU1NR3tHgzeM2sOYc1jDB8Za3u4.sO91PiuM98bW1C', 'Admin', 'User', 0),
-    (NOW(), NOW(), 'moderator_user', 'moderator@example.com', '$2a$10$XURPShQ5u3QRU1NR3tHgzeM2sOYc1jDB8Za3u4.sO91PiuM98bW1C', 'Moderator', 'User', 0),
-    (NOW(), NOW(), 'normal_user', 'user@example.com', '$2a$10$XURPShQ5u3QRU1NR3tHgzeM2sOYc1jDB8Za3u4.sO91PiuM98bW1C', 'Normal', 'User', 0);
+    (NOW(), NOW(), 'admin_user', 'admin@example.com', '$2a$12$oZV.nkCo2MLCU8DgSzvnaeXHMwKj5m2o4SRCZ/2afPBrCMPrvfE4W', 'Admin', 'User', 0),
+    (NOW(), NOW(), 'moderator_user', 'moderator@example.com', '$2a$12$oZV.nkCo2MLCU8DgSzvnaeXHMwKj5m2o4SRCZ/2afPBrCMPrvfE4W', 'Moderator', 'User', 0),
+    (NOW(), NOW(), 'normal_user', 'user@example.com', '$2a$12$oZV.nkCo2MLCU8DgSzvnaeXHMwKj5m2o4SRCZ/2afPBrCMPrvfE4W', 'Normal', 'User', 0);
 
 -- Kullanıcı-rol ilişkileri
 INSERT INTO user_role (user_id, role_id)

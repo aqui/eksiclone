@@ -7,6 +7,7 @@ import in.batur.eksiclone.repository.UserRepository;
 import in.batur.eksiclone.userservice.exception.UserNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,42 +23,30 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private RoleRepository roleRepository;
+    
+    @Autowired
+    private UserMapper userMapper;
+    
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public List<UserDTO> findAll() {
         log.info("Fetching all users");
         List<User> users = userRepository.findAll();
-        List<UserDTO> userDTOs = users.stream().map(user -> {
-            UserDTO dto = new UserDTO();
-            dto.setId(user.getId());
-            dto.setUsername(user.getUsername());
-            dto.setEmail(user.getEmail());
-            dto.setName(user.getName());
-            dto.setLastName(user.getLastName());
-            dto.setRoleNames(user.getRoles().stream()
-                .map(role -> role.getRoleName())
-                .collect(Collectors.toList()));
-            return dto;
-        }).collect(Collectors.toList());
+        List<UserDTO> userDTOs = users.stream()
+            .map(userMapper::toDto)
+            .collect(Collectors.toList());
         log.info("Found {} users", userDTOs.size());
         return userDTOs;
     }
-
+    
     @Override
     public UserDTO findById(Long id) {
         log.info("Fetching user with id {}", id);
         User user = userRepository.findById(id)
             .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
-        UserDTO dto = new UserDTO();
-        dto.setId(user.getId());
-        dto.setUsername(user.getUsername());
-        dto.setEmail(user.getEmail());
-        dto.setName(user.getName());
-        dto.setLastName(user.getLastName());
-        dto.setRoleNames(user.getRoles().stream()
-            .map(role -> role.getRoleName())
-            .collect(Collectors.toList()));
-        return dto;
+        return userMapper.toDto(user);
     }
 
     @Override
@@ -69,13 +58,12 @@ public class UserServiceImpl implements UserService {
         if (userRepository.existsByEmail(userDTO.getEmail())) {
             throw new IllegalArgumentException("Email already exists: " + userDTO.getEmail());
         }
-        User user = new User();
-        user.setUsername(userDTO.getUsername());
-        user.setEmail(userDTO.getEmail());
-        user.setPassword(userDTO.getPassword());
-        user.setName(userDTO.getName());
-        user.setLastName(userDTO.getLastName());
-
+        
+        User user = userMapper.toEntity(userDTO);
+        
+        // Password encoding
+        user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+        
         List<Role> roles = userDTO.getRoleNames().stream()
             .map(roleName -> roleRepository.findByRoleName(roleName)
                 .orElseThrow(() -> new IllegalArgumentException("Role not found: " + roleName)))
@@ -83,18 +71,7 @@ public class UserServiceImpl implements UserService {
         user.setRoles(roles);
 
         User savedUser = userRepository.save(user);
-        
-        // Create response DTO without password
-        UserDTO responseDTO = new UserDTO();
-        responseDTO.setId(savedUser.getId());
-        responseDTO.setUsername(savedUser.getUsername());
-        responseDTO.setEmail(savedUser.getEmail());
-        responseDTO.setName(savedUser.getName());
-        responseDTO.setLastName(savedUser.getLastName());
-        responseDTO.setRoleNames(savedUser.getRoles().stream()
-            .map(role -> role.getRoleName())
-            .collect(Collectors.toList()));
-        return responseDTO;
+        return userMapper.toDto(savedUser);
     }
 
     @Override
@@ -112,14 +89,14 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Email already exists: " + userDTO.getEmail());
         }
 
-        user.setUsername(userDTO.getUsername());
-        user.setEmail(userDTO.getEmail());
+        userMapper.updateEntity(userDTO, user);
+        
+        // Handle password separately with encoding
         if (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()) {
-            user.setPassword(userDTO.getPassword());
+            user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         }
-        user.setName(userDTO.getName());
-        user.setLastName(userDTO.getLastName());
-
+        
+        // Handle roles
         List<Role> roles = userDTO.getRoleNames().stream()
             .map(roleName -> roleRepository.findByRoleName(roleName)
                 .orElseThrow(() -> new IllegalArgumentException("Role not found: " + roleName)))
@@ -127,26 +104,17 @@ public class UserServiceImpl implements UserService {
         user.setRoles(roles);
 
         User updatedUser = userRepository.save(user);
-        
-        // Create response DTO without password
-        UserDTO responseDTO = new UserDTO();
-        responseDTO.setId(updatedUser.getId());
-        responseDTO.setUsername(updatedUser.getUsername());
-        responseDTO.setEmail(updatedUser.getEmail());
-        responseDTO.setName(updatedUser.getName());
-        responseDTO.setLastName(updatedUser.getLastName());
-        responseDTO.setRoleNames(updatedUser.getRoles().stream()
-            .map(role -> role.getRoleName())
-            .collect(Collectors.toList()));
-        return responseDTO;
+        return userMapper.toDto(updatedUser);
     }
 
     @Override
     public void deleteUser(Long id) {
         log.info("Deleting user with id {}", id);
-        if (!userRepository.existsById(id)) {
-            throw new UserNotFoundException("User not found with id: " + id);
-        }
-        userRepository.deleteById(id);
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+        
+        // Delete the user
+        userRepository.delete(user);
+        log.info("User deleted successfully: {}", user.getUsername());
     }
 }

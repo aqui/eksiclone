@@ -1,43 +1,119 @@
-Java and Maven
+### Java ###
+# Compiled class files
+*.class
 
-\*.class \*.jar \*.war \*.ear \*.log \*.iml \*.idea .idea/ \*.ipr \*.iws \*.bak \*.swp \*.swo \*.tmp \*.cache \*.classpath \*.project \*.settings/ target/ out/ build/ dependency-reduced-pom.xml
+# Ignore JWT Keys
+*/keys/
+*/src/main/resources/keys/
+**/private.key
+**/public.key
 
-Maven
+# Log files
+*.log
+logs/
 
-.mvn/ mvnw mvnw.cmd .mvn/wrapper/
+# PID files
+pids/
+*.pid
+*.pidfile
 
-# Spring Boot
+# Package files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
 
-\*.h2.db \*.mv.db \*.lock.db application-local.yml application-dev.yml application-prod.yml \*.pid
+# Virtual machine crash logs
+hs_err_pid*
+replay_pid*
 
-# Logs
+### Maven ###
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
 
-logs/ \*.log *.log.*
+### STS/Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
 
-# IDEs
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
 
-.vscode/ \*.code-workspace \*.sublime-project \*.sublime-workspace \*.komodoproject \*.tmproj \*.tmproject \*.tmtheme \*.tmtags \*.tm_properties \*.tm_build_errors \*.tmtags \*.tm_snippets \*.tmsnippet \*.tmPreferences \*.tmLanguage \*.tmTheme \*.tmCommand \*.tmMacro \*.tmDragCommand \*.tmDragText \*.tmDragItem \*.tmDragImage \*.tmDragDrawing \*.tmDragWindow \*.tmDragUnknown \*.tmDragUnknownItem \*.tmDragUnknownDrawing \*.tmDragUnknownWindow \*.tmDragUnknownImage \*.tmDragUnknownText \*.tmDragUnknownCommand \*.tmDragUnknownMacro \*.tmDragUnknownPreferences \*.tmDragUnknownLanguage \*.tmDragUnknownTheme \*.tmDragUnknownSnippet \*.tmDragUnknownProject \*.tmDragUnknownWorkspace \*.tmDragUnknownCodeWorkspace \*.tmDragUnknownKomodoProject \*.tmDragUnknownSublimeProject \*.tmDragUnknownSublimeWorkspace
+### VS Code ###
+.vscode/
 
-# OS-specific
+### Spring Boot ###
+*.env
+application-*.yml
+application-*.properties
+!application.yml
+!application.properties
+.metadata/
 
-.DS_Store Thumbs.db desktop.ini
+### JWT Keys ###
+# Comment out if you want to include keys in your repo
+# */keys/private.key
+# */keys/public.key
+# */src/main/resources/keys/
+# */target/classes/keys/
 
-# Dependency directories
+### OS Specific ###
+# MacOS
+.DS_Store
+.AppleDouble
+.LSOverride
 
-lib/ libs/ dependencies/ dependency/
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 
-# Environment-specific
+### Project Specific ###
+# Generated files
+tree.txt
+eksiclone.txt
+eksiclone_api_test_*.log
 
-.env .env.local .env.development .env.test .env.production
+# Temporary files
+*.swp
+*.swo
+*~
+*.tmp
+*.bak
 
-# Testing
+# Database files
+*.db
+*.sqlite
+*.sqlite3
 
-\*.test \*.spec coverage/ test-results/
-
-# Docker
-
-docker-compose.override.yml \*.dockerignore Dockerfile.local
-
-# Miscellaneous
-
-\*.bak \*.swp \*\~ \*.orig \*.rej \*.patch \*.diff node_modules/ dist/ tmp/ temp/
+# Build output
+build/
+dist/

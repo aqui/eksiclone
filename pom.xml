@@ -30,6 +30,7 @@
         <module>role-service</module>
         <module>gateway</module>
         <module>eureka-server</module>
+        <module>security</module>
     </modules>
 
     <dependencyManagement>

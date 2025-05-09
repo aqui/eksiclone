@@ -32,6 +32,17 @@
 			<version>2.5.0</version>
 		</dependency>
 		<dependency>
+			<groupId>in.batur.eksiclone</groupId>
+			<artifactId>security</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.mapstruct</groupId>
+			<artifactId>mapstruct-processor</artifactId>
+			<version>1.5.5.Final</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-devtools</artifactId>
 			<scope>runtime</scope>
@@ -72,6 +83,11 @@
 			<groupId>in.batur.eksiclone</groupId>
 			<artifactId>repository</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<!-- Actuator Dependency -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

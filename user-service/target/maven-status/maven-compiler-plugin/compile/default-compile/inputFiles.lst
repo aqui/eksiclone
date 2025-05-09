@@ -1,7 +1,0 @@
-/home/aqui/eclipse-workspace/eksiclone/user-service/src/main/java/in/batur/eksiclone/userservice/UserServiceApplication.java
-/home/aqui/eclipse-workspace/eksiclone/user-service/src/main/java/in/batur/eksiclone/userservice/controller/UserController.java
-/home/aqui/eclipse-workspace/eksiclone/user-service/src/main/java/in/batur/eksiclone/userservice/exception/GlobalExceptionHandler.java
-/home/aqui/eclipse-workspace/eksiclone/user-service/src/main/java/in/batur/eksiclone/userservice/exception/UserNotFoundException.java
-/home/aqui/eclipse-workspace/eksiclone/user-service/src/main/java/in/batur/eksiclone/userservice/service/UserDTO.java
-/home/aqui/eclipse-workspace/eksiclone/user-service/src/main/java/in/batur/eksiclone/userservice/service/UserService.java
-/home/aqui/eclipse-workspace/eksiclone/user-service/src/main/java/in/batur/eksiclone/userservice/service/UserServiceImpl.java

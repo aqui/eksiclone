@@ -38,10 +38,12 @@ public class RoleController {
         return ResponseEntity.ok(roleDTO);
     }
 
-    @Operation(summary = "Create a new role", description = "Creates a new role with the provided details")
+    @Operation(summary = "Create a new role", 
+               description = "Creates a new role with the provided details. " +
+                             "Role name must be unique and follow the format 'ROLE_NAME'.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Role created successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid role data")
+        @ApiResponse(responseCode = "400", description = "Invalid role data or duplicate role name")
     })
     @PostMapping
     public ResponseEntity<RoleDTO> createRole(@Valid @RequestBody RoleDTO roleDTO) {
@@ -49,11 +51,13 @@ public class RoleController {
         return new ResponseEntity<>(createdRole, HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Update a role", description = "Updates the details of a role with the specified ID")
+    @Operation(summary = "Update a role", 
+               description = "Updates the details of a role with the specified ID. " +
+                             "Role name must remain unique and follow the format 'ROLE_NAME'.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Role updated successfully"),
         @ApiResponse(responseCode = "404", description = "Role not found"),
-        @ApiResponse(responseCode = "400", description = "Invalid role data")
+        @ApiResponse(responseCode = "400", description = "Invalid role data or duplicate role name")
     })
     @PutMapping("/{id}")
     public ResponseEntity<RoleDTO> updateRole(@PathVariable Long id, @Valid @RequestBody RoleDTO roleDTO) {
@@ -62,10 +66,13 @@ public class RoleController {
         return ResponseEntity.ok(updatedRole);
     }
 
-    @Operation(summary = "Delete a role", description = "Deletes a role with the specified ID")
+    @Operation(summary = "Delete a role", 
+               description = "Deletes a role with the specified ID. " +
+                             "Will fail if any users are currently assigned this role.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Role deleted successfully"),
-        @ApiResponse(responseCode = "404", description = "Role not found")
+        @ApiResponse(responseCode = "404", description = "Role not found"),
+        @ApiResponse(responseCode = "400", description = "Role cannot be deleted as it is assigned to users")
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteRole(@PathVariable Long id) {
