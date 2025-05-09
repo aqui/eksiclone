@@ -8,25 +8,25 @@
 
  :: Spring Boot ::                (v3.4.5)
 
-2025-05-08T22:28:57.927+03:00  INFO 1834293 --- [role-service] [           main] i.b.e.r.RoleServiceApplication           : Starting RoleServiceApplication v0.0.1-SNAPSHOT using Java 21.0.6 with PID 1834293 (/home/aqui/eclipse-workspace/eksiclone/role-service/target/role-service-0.0.1-SNAPSHOT.jar started by aqui in /home/aqui/eclipse-workspace/eksiclone)
-2025-05-08T22:28:57.930+03:00  INFO 1834293 --- [role-service] [           main] i.b.e.r.RoleServiceApplication           : No active profile set, falling back to 1 default profile: "default"
-2025-05-08T22:28:58.431+03:00  INFO 1834293 --- [role-service] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2025-05-08T22:28:58.541+03:00  INFO 1834293 --- [role-service] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 104 ms. Found 2 JPA repository interfaces.
-2025-05-08T22:28:58.858+03:00  INFO 1834293 --- [role-service] [           main] o.s.cloud.context.scope.GenericScope     : BeanFactory id=9c1b3410-9761-38c6-9d43-baf2752d2c1b
-2025-05-08T22:28:59.133+03:00  INFO 1834293 --- [role-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8083 (http)
-2025-05-08T22:28:59.143+03:00  INFO 1834293 --- [role-service] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
-2025-05-08T22:28:59.143+03:00  INFO 1834293 --- [role-service] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.40]
-2025-05-08T22:28:59.171+03:00  INFO 1834293 --- [role-service] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
-2025-05-08T22:28:59.172+03:00  INFO 1834293 --- [role-service] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1190 ms
-2025-05-08T22:28:59.285+03:00  INFO 1834293 --- [role-service] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
-2025-05-08T22:28:59.321+03:00  INFO 1834293 --- [role-service] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.13.Final
-2025-05-08T22:28:59.342+03:00  INFO 1834293 --- [role-service] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
-2025-05-08T22:28:59.511+03:00  INFO 1834293 --- [role-service] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
-2025-05-08T22:28:59.530+03:00  INFO 1834293 --- [role-service] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
-2025-05-08T22:28:59.599+03:00  INFO 1834293 --- [role-service] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.mariadb.jdbc.Connection@d13379e
-2025-05-08T22:28:59.601+03:00  INFO 1834293 --- [role-service] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
-2025-05-08T22:28:59.620+03:00  WARN 1834293 --- [role-service] [           main] org.hibernate.orm.deprecation            : HHH90000025: MariaDBDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
-2025-05-08T22:28:59.631+03:00  INFO 1834293 --- [role-service] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+2025-05-09T11:34:34.710+03:00  INFO 2025797 --- [role-service] [           main] i.b.e.r.RoleServiceApplication           : Starting RoleServiceApplication v0.0.1-SNAPSHOT using Java 21.0.6 with PID 2025797 (/home/aqui/eclipse-workspace/eksiclone/role-service/target/role-service-0.0.1-SNAPSHOT.jar started by aqui in /home/aqui/eclipse-workspace/eksiclone)
+2025-05-09T11:34:34.712+03:00  INFO 2025797 --- [role-service] [           main] i.b.e.r.RoleServiceApplication           : No active profile set, falling back to 1 default profile: "default"
+2025-05-09T11:34:35.329+03:00  INFO 2025797 --- [role-service] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-05-09T11:34:35.459+03:00  INFO 2025797 --- [role-service] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 123 ms. Found 2 JPA repository interfaces.
+2025-05-09T11:34:35.797+03:00  INFO 2025797 --- [role-service] [           main] o.s.cloud.context.scope.GenericScope     : BeanFactory id=9c1b3410-9761-38c6-9d43-baf2752d2c1b
+2025-05-09T11:34:36.130+03:00  INFO 2025797 --- [role-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8083 (http)
+2025-05-09T11:34:36.142+03:00  INFO 2025797 --- [role-service] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-05-09T11:34:36.142+03:00  INFO 2025797 --- [role-service] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.40]
+2025-05-09T11:34:36.166+03:00  INFO 2025797 --- [role-service] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-05-09T11:34:36.167+03:00  INFO 2025797 --- [role-service] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1402 ms
+2025-05-09T11:34:36.306+03:00  INFO 2025797 --- [role-service] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-05-09T11:34:36.356+03:00  INFO 2025797 --- [role-service] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.13.Final
+2025-05-09T11:34:36.384+03:00  INFO 2025797 --- [role-service] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-05-09T11:34:36.583+03:00  INFO 2025797 --- [role-service] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-05-09T11:34:36.604+03:00  INFO 2025797 --- [role-service] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-05-09T11:34:36.689+03:00  INFO 2025797 --- [role-service] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.mariadb.jdbc.Connection@d13379e
+2025-05-09T11:34:36.691+03:00  INFO 2025797 --- [role-service] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-05-09T11:34:36.714+03:00  WARN 2025797 --- [role-service] [           main] org.hibernate.orm.deprecation            : HHH90000025: MariaDBDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-05-09T11:34:36.726+03:00  INFO 2025797 --- [role-service] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
 	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
 	Database driver: undefined/unknown
 	Database version: 10.11.11
@@ -34,45 +34,38 @@
 	Isolation level: undefined/unknown
 	Minimum pool size: undefined/unknown
 	Maximum pool size: undefined/unknown
-2025-05-08T22:29:00.122+03:00  INFO 1834293 --- [role-service] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2025-05-08T22:29:00.123+03:00  INFO 1834293 --- [role-service] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
-2025-05-08T22:29:00.511+03:00  INFO 1834293 --- [role-service] [           main] o.s.v.b.OptionalValidatorFactoryBean     : Failed to set up a Bean Validation provider: jakarta.validation.NoProviderFoundException: Unable to create a Configuration, because no Jakarta Bean Validation provider could be found. Add a provider like Hibernate Validator (RI) to your classpath.
-2025-05-08T22:29:00.965+03:00  INFO 1834293 --- [role-service] [           main] DiscoveryClientOptionalArgsConfiguration : Eureka HTTP Client uses RestTemplate.
-2025-05-08T22:29:01.031+03:00  INFO 1834293 --- [role-service] [           main] o.s.c.n.eureka.InstanceInfoFactory       : Setting initial instance status as: STARTING
-2025-05-08T22:29:01.052+03:00  INFO 1834293 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Initializing Eureka in region us-east-1
-2025-05-08T22:29:01.055+03:00  INFO 1834293 --- [role-service] [           main] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
-2025-05-08T22:29:01.062+03:00  INFO 1834293 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Disable delta property : false
-2025-05-08T22:29:01.063+03:00  INFO 1834293 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Single vip registry refresh property : null
-2025-05-08T22:29:01.063+03:00  INFO 1834293 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Force full registry fetch : false
-2025-05-08T22:29:01.063+03:00  INFO 1834293 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Application is null : false
-2025-05-08T22:29:01.063+03:00  INFO 1834293 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Registered Applications size is zero : true
-2025-05-08T22:29:01.063+03:00  INFO 1834293 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Application version is -1: true
-2025-05-08T22:29:01.063+03:00  INFO 1834293 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Getting all instance registry info from the eureka server
-2025-05-08T22:29:01.348+03:00  INFO 1834293 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : The response status is 200
-2025-05-08T22:29:01.350+03:00  INFO 1834293 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Starting heartbeat executor: renew interval is: 30
-2025-05-08T22:29:01.351+03:00  INFO 1834293 --- [role-service] [           main] c.n.discovery.InstanceInfoReplicator     : InstanceInfoReplicator onDemand update allowed rate per min is 4
-2025-05-08T22:29:01.352+03:00  INFO 1834293 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Discovery Client initialized at timestamp 1746732541352 with initial instances count: 2
-2025-05-08T22:29:01.355+03:00  INFO 1834293 --- [role-service] [           main] o.s.c.n.e.s.EurekaServiceRegistry        : Registering application ROLE-SERVICE with eureka with status UP
-2025-05-08T22:29:01.356+03:00  INFO 1834293 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Saw local status change event StatusChangeEvent [timestamp=1746732541356, current=UP, previous=STARTING]
-2025-05-08T22:29:01.358+03:00  INFO 1834293 --- [role-service] [foReplicator-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ROLE-SERVICE/10.22.167.145:role-service:8083: registering service...
-2025-05-08T22:29:01.366+03:00  INFO 1834293 --- [role-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8083 (http) with context path '/'
-2025-05-08T22:29:01.367+03:00  INFO 1834293 --- [role-service] [           main] .s.c.n.e.s.EurekaAutoServiceRegistration : Updating port to 8083
-2025-05-08T22:29:01.387+03:00  INFO 1834293 --- [role-service] [           main] i.b.e.r.RoleServiceApplication           : Started RoleServiceApplication in 3.858 seconds (process running for 4.257)
-2025-05-08T22:29:01.395+03:00  INFO 1834293 --- [role-service] [foReplicator-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ROLE-SERVICE/10.22.167.145:role-service:8083 - registration status: 204
-2025-05-08T22:29:20.305+03:00  INFO 1834293 --- [role-service] [nio-8083-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
-2025-05-08T22:29:20.305+03:00  INFO 1834293 --- [role-service] [nio-8083-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
-2025-05-08T22:29:20.306+03:00  INFO 1834293 --- [role-service] [nio-8083-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
-2025-05-09T09:21:15.066+03:00  INFO 1834293 --- [role-service] [beatExecutor-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ROLE-SERVICE/10.22.167.145:role-service:8083 - Re-registering apps/ROLE-SERVICE
-2025-05-09T09:21:15.066+03:00  INFO 1834293 --- [role-service] [beatExecutor-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ROLE-SERVICE/10.22.167.145:role-service:8083: registering service...
-2025-05-09T09:21:15.080+03:00  INFO 1834293 --- [role-service] [beatExecutor-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ROLE-SERVICE/10.22.167.145:role-service:8083 - registration status: 204
-2025-05-09T09:21:44.598+03:00  INFO 1834293 --- [role-service] [rap-executor-%d] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
-2025-05-09T09:22:46.949+03:00  INFO 1834293 --- [role-service] [ionShutdownHook] o.s.c.n.e.s.EurekaServiceRegistry        : Unregistering application ROLE-SERVICE with eureka with status DOWN
-2025-05-09T09:22:46.950+03:00  INFO 1834293 --- [role-service] [ionShutdownHook] com.netflix.discovery.DiscoveryClient    : Saw local status change event StatusChangeEvent [timestamp=1746771766950, current=DOWN, previous=UP]
-2025-05-09T09:22:46.950+03:00  INFO 1834293 --- [role-service] [foReplicator-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ROLE-SERVICE/10.22.167.145:role-service:8083: registering service...
-2025-05-09T09:22:46.953+03:00  INFO 1834293 --- [role-service] [ionShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
-2025-05-09T09:22:46.960+03:00  INFO 1834293 --- [role-service] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
-2025-05-09T09:22:46.963+03:00  INFO 1834293 --- [role-service] [foReplicator-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ROLE-SERVICE/10.22.167.145:role-service:8083 - registration status: 204
-2025-05-09T09:22:46.971+03:00  INFO 1834293 --- [role-service] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
-2025-05-09T09:22:46.973+03:00  INFO 1834293 --- [role-service] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
-2025-05-09T09:22:46.978+03:00  INFO 1834293 --- [role-service] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
-2025-05-09T09:22:46.980+03:00  INFO 1834293 --- [role-service] [ionShutdownHook] com.netflix.discovery.DiscoveryClient    : Shutting down DiscoveryClient ...
+2025-05-09T11:34:37.241+03:00  INFO 2025797 --- [role-service] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-05-09T11:34:37.243+03:00  INFO 2025797 --- [role-service] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-05-09T11:34:37.746+03:00  INFO 2025797 --- [role-service] [           main] o.s.v.b.OptionalValidatorFactoryBean     : Failed to set up a Bean Validation provider: jakarta.validation.NoProviderFoundException: Unable to create a Configuration, because no Jakarta Bean Validation provider could be found. Add a provider like Hibernate Validator (RI) to your classpath.
+2025-05-09T11:34:38.275+03:00  INFO 2025797 --- [role-service] [           main] DiscoveryClientOptionalArgsConfiguration : Eureka HTTP Client uses RestTemplate.
+2025-05-09T11:34:38.348+03:00  INFO 2025797 --- [role-service] [           main] o.s.c.n.eureka.InstanceInfoFactory       : Setting initial instance status as: STARTING
+2025-05-09T11:34:38.372+03:00  INFO 2025797 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Initializing Eureka in region us-east-1
+2025-05-09T11:34:38.375+03:00  INFO 2025797 --- [role-service] [           main] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
+2025-05-09T11:34:38.383+03:00  INFO 2025797 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Disable delta property : false
+2025-05-09T11:34:38.383+03:00  INFO 2025797 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Single vip registry refresh property : null
+2025-05-09T11:34:38.383+03:00  INFO 2025797 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Force full registry fetch : false
+2025-05-09T11:34:38.383+03:00  INFO 2025797 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Application is null : false
+2025-05-09T11:34:38.383+03:00  INFO 2025797 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Registered Applications size is zero : true
+2025-05-09T11:34:38.383+03:00  INFO 2025797 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Application version is -1: true
+2025-05-09T11:34:38.383+03:00  INFO 2025797 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Getting all instance registry info from the eureka server
+2025-05-09T11:34:38.736+03:00  INFO 2025797 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : The response status is 200
+2025-05-09T11:34:38.737+03:00  INFO 2025797 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Starting heartbeat executor: renew interval is: 30
+2025-05-09T11:34:38.739+03:00  INFO 2025797 --- [role-service] [           main] c.n.discovery.InstanceInfoReplicator     : InstanceInfoReplicator onDemand update allowed rate per min is 4
+2025-05-09T11:34:38.741+03:00  INFO 2025797 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Discovery Client initialized at timestamp 1746779678740 with initial instances count: 2
+2025-05-09T11:34:38.746+03:00  INFO 2025797 --- [role-service] [           main] o.s.c.n.e.s.EurekaServiceRegistry        : Registering application ROLE-SERVICE with eureka with status UP
+2025-05-09T11:34:38.747+03:00  INFO 2025797 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Saw local status change event StatusChangeEvent [timestamp=1746779678747, current=UP, previous=STARTING]
+2025-05-09T11:34:38.749+03:00  INFO 2025797 --- [role-service] [foReplicator-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ROLE-SERVICE/10.9.9.188:role-service:8083: registering service...
+2025-05-09T11:34:38.764+03:00  INFO 2025797 --- [role-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8083 (http) with context path '/'
+2025-05-09T11:34:38.765+03:00  INFO 2025797 --- [role-service] [           main] .s.c.n.e.s.EurekaAutoServiceRegistration : Updating port to 8083
+2025-05-09T11:34:38.797+03:00  INFO 2025797 --- [role-service] [foReplicator-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ROLE-SERVICE/10.9.9.188:role-service:8083 - registration status: 204
+2025-05-09T11:34:39.065+03:00  INFO 2025797 --- [role-service] [           main] i.b.e.r.RoleServiceApplication           : Started RoleServiceApplication in 4.825 seconds (process running for 5.221)
+2025-05-09T11:39:07.804+03:00  INFO 2025797 --- [role-service] [ionShutdownHook] o.s.c.n.e.s.EurekaServiceRegistry        : Unregistering application ROLE-SERVICE with eureka with status DOWN
+2025-05-09T11:39:07.805+03:00  INFO 2025797 --- [role-service] [ionShutdownHook] com.netflix.discovery.DiscoveryClient    : Saw local status change event StatusChangeEvent [timestamp=1746779947805, current=DOWN, previous=UP]
+2025-05-09T11:39:07.805+03:00  INFO 2025797 --- [role-service] [foReplicator-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ROLE-SERVICE/10.9.9.188:role-service:8083: registering service...
+2025-05-09T11:39:07.809+03:00  INFO 2025797 --- [role-service] [ionShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2025-05-09T11:39:07.813+03:00  INFO 2025797 --- [role-service] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+2025-05-09T11:39:07.816+03:00  INFO 2025797 --- [role-service] [foReplicator-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ROLE-SERVICE/10.9.9.188:role-service:8083 - registration status: 204
+2025-05-09T11:39:07.820+03:00  INFO 2025797 --- [role-service] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-05-09T11:39:07.822+03:00  INFO 2025797 --- [role-service] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-05-09T11:39:07.827+03:00  INFO 2025797 --- [role-service] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2025-05-09T11:39:07.828+03:00  INFO 2025797 --- [role-service] [ionShutdownHook] com.netflix.discovery.DiscoveryClient    : Shutting down DiscoveryClient ...

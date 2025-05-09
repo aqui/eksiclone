@@ -1,5 +1,6 @@
 /home/aqui/eclipse-workspace/eksiclone/role-service/src/main/java/in/batur/eksiclone/roleservice/RoleServiceApplication.java
 /home/aqui/eclipse-workspace/eksiclone/role-service/src/main/java/in/batur/eksiclone/roleservice/controller/RoleController.java
 /home/aqui/eclipse-workspace/eksiclone/role-service/src/main/java/in/batur/eksiclone/roleservice/exception/GlobalExceptionHandler.java
+/home/aqui/eclipse-workspace/eksiclone/role-service/src/main/java/in/batur/eksiclone/roleservice/service/RoleDTO.java
 /home/aqui/eclipse-workspace/eksiclone/role-service/src/main/java/in/batur/eksiclone/roleservice/service/RoleService.java
 /home/aqui/eclipse-workspace/eksiclone/role-service/src/main/java/in/batur/eksiclone/roleservice/service/RoleServiceImpl.java

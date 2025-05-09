@@ -3,11 +3,14 @@ package in.batur.eksiclone.roleservice.controller;
 import in.batur.eksiclone.roleservice.service.RoleDTO;
 import in.batur.eksiclone.roleservice.service.RoleService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -22,5 +25,51 @@ public class RoleController {
     @GetMapping
     public List<RoleDTO> findAll() {
         return roleService.findAll();
+    }
+
+    @Operation(summary = "Get a role by ID", description = "Returns the details of a role with the specified ID")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Role found"),
+        @ApiResponse(responseCode = "404", description = "Role not found")
+    })
+    @GetMapping("/{id}")
+    public ResponseEntity<RoleDTO> findById(@PathVariable Long id) {
+        RoleDTO roleDTO = roleService.findById(id);
+        return ResponseEntity.ok(roleDTO);
+    }
+
+    @Operation(summary = "Create a new role", description = "Creates a new role with the provided details")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Role created successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid role data")
+    })
+    @PostMapping
+    public ResponseEntity<RoleDTO> createRole(@Valid @RequestBody RoleDTO roleDTO) {
+        RoleDTO createdRole = roleService.createRole(roleDTO);
+        return new ResponseEntity<>(createdRole, HttpStatus.CREATED);
+    }
+
+    @Operation(summary = "Update a role", description = "Updates the details of a role with the specified ID")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Role updated successfully"),
+        @ApiResponse(responseCode = "404", description = "Role not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid role data")
+    })
+    @PutMapping("/{id}")
+    public ResponseEntity<RoleDTO> updateRole(@PathVariable Long id, @Valid @RequestBody RoleDTO roleDTO) {
+        roleDTO.setId(id);
+        RoleDTO updatedRole = roleService.updateRole(roleDTO);
+        return ResponseEntity.ok(updatedRole);
+    }
+
+    @Operation(summary = "Delete a role", description = "Deletes a role with the specified ID")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Role deleted successfully"),
+        @ApiResponse(responseCode = "404", description = "Role not found")
+    })
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteRole(@PathVariable Long id) {
+        roleService.deleteRole(id);
+        return ResponseEntity.noContent().build();
     }
 }
