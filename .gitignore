@@ -1,0 +1,43 @@
+Java and Maven
+
+\*.class \*.jar \*.war \*.ear \*.log \*.iml \*.idea .idea/ \*.ipr \*.iws \*.bak \*.swp \*.swo \*.tmp \*.cache \*.classpath \*.project \*.settings/ target/ out/ build/ dependency-reduced-pom.xml
+
+Maven
+
+.mvn/ mvnw mvnw.cmd .mvn/wrapper/
+
+# Spring Boot
+
+\*.h2.db \*.mv.db \*.lock.db application-local.yml application-dev.yml application-prod.yml \*.pid
+
+# Logs
+
+logs/ \*.log *.log.*
+
+# IDEs
+
+.vscode/ \*.code-workspace \*.sublime-project \*.sublime-workspace \*.komodoproject \*.tmproj \*.tmproject \*.tmtheme \*.tmtags \*.tm_properties \*.tm_build_errors \*.tmtags \*.tm_snippets \*.tmsnippet \*.tmPreferences \*.tmLanguage \*.tmTheme \*.tmCommand \*.tmMacro \*.tmDragCommand \*.tmDragText \*.tmDragItem \*.tmDragImage \*.tmDragDrawing \*.tmDragWindow \*.tmDragUnknown \*.tmDragUnknownItem \*.tmDragUnknownDrawing \*.tmDragUnknownWindow \*.tmDragUnknownImage \*.tmDragUnknownText \*.tmDragUnknownCommand \*.tmDragUnknownMacro \*.tmDragUnknownPreferences \*.tmDragUnknownLanguage \*.tmDragUnknownTheme \*.tmDragUnknownSnippet \*.tmDragUnknownProject \*.tmDragUnknownWorkspace \*.tmDragUnknownCodeWorkspace \*.tmDragUnknownKomodoProject \*.tmDragUnknownSublimeProject \*.tmDragUnknownSublimeWorkspace
+
+# OS-specific
+
+.DS_Store Thumbs.db desktop.ini
+
+# Dependency directories
+
+lib/ libs/ dependencies/ dependency/
+
+# Environment-specific
+
+.env .env.local .env.development .env.test .env.production
+
+# Testing
+
+\*.test \*.spec coverage/ test-results/
+
+# Docker
+
+docker-compose.override.yml \*.dockerignore Dockerfile.local
+
+# Miscellaneous
+
+\*.bak \*.swp \*\~ \*.orig \*.rej \*.patch \*.diff node_modules/ dist/ tmp/ temp/

@@ -1,0 +1,1748 @@
+==== Dosya: ./entity/pom.xml ====
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>in.batur.eksiclone</groupId>
+		<artifactId>eksiclone</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>entity</artifactId>
+	<name>Eksi Clone Entity</name>
+	<description>Eksi Clone Entity Module</description>
+	<packaging>jar</packaging>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.mapstruct</groupId>
+			<artifactId>mapstruct</artifactId>
+			<version>1.5.5.Final</version>
+		</dependency>
+		<dependency>
+			<groupId>jakarta.persistence</groupId>
+			<artifactId>jakarta.persistence-api</artifactId>
+		</dependency>
+	</dependencies>
+</project>==== Dosya: ./entity/src/main/java/in/batur/eksiclone/entity/User.java ====
+package in.batur.eksiclone.entity;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "users")
+@Getter
+@Setter
+@NoArgsConstructor
+public class User extends BaseEntity {
+    @Column(unique = true, nullable = false)
+    private String username;
+
+    @Column(unique = true, nullable = false)
+    private String email;
+
+    @Column(nullable = false)
+    private String password;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
+    private String lastName;
+
+    @Version
+    private Long version;
+
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(
+        name = "user_role",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private List<Role> roles = new ArrayList<>();
+}==== Dosya: ./entity/src/main/java/in/batur/eksiclone/entity/Role.java ====
+package in.batur.eksiclone.entity;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Table(name = "roles")
+@Getter
+@Setter
+@NoArgsConstructor
+public class Role extends BaseEntity {
+    @Column(unique = true, nullable = false)
+    private String roleName;
+
+    @Version
+    private Long version;
+}==== Dosya: ./entity/src/main/java/in/batur/eksiclone/entity/BaseEntity.java ====
+package in.batur.eksiclone.entity;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.time.LocalDateTime;
+
+@MappedSuperclass
+@Getter
+@Setter
+public abstract class BaseEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "created_date")
+    private LocalDateTime createdDate;
+
+    @Column(name = "last_updated_date")
+    private LocalDateTime lastUpdatedDate;
+
+    @PrePersist
+    protected void onCreate() {
+        createdDate = LocalDateTime.now();
+        lastUpdatedDate = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        lastUpdatedDate = LocalDateTime.now();
+    }
+}==== Dosya: ./user-service/target/classes/db/migration/V1__init_eksidb.sql ====
+CREATE TABLE users (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    created_date DATETIME,
+    last_updated_date DATETIME,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    last_name VARCHAR(255) NOT NULL,
+    version BIGINT
+);
+
+CREATE TABLE roles (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    created_date DATETIME,
+    last_updated_date DATETIME,
+    role_name VARCHAR(50) NOT NULL UNIQUE,
+    version BIGINT
+);
+
+CREATE TABLE user_role (
+    user_id BIGINT NOT NULL,
+    role_id BIGINT NOT NULL,
+    PRIMARY KEY (user_id, role_id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (role_id) REFERENCES roles(id)
+);
+
+-- Varsayılan roller
+INSERT INTO roles (created_date, last_updated_date, role_name, version)
+VALUES 
+    (NOW(), NOW(), 'ROLE_ADMIN', 0),
+    (NOW(), NOW(), 'ROLE_MODERATOR', 0),
+    (NOW(), NOW(), 'ROLE_USER', 0);
+
+-- Varsayılan kullanıcılar
+INSERT INTO users (created_date, last_updated_date, username, email, password, name, last_name, version)
+VALUES 
+    (NOW(), NOW(), 'admin_user', 'admin@example.com', '$2a$10$XURPShQ5u3QRU1NR3tHgzeM2sOYc1jDB8Za3u4.sO91PiuM98bW1C', 'Admin', 'User', 0),
+    (NOW(), NOW(), 'moderator_user', 'moderator@example.com', '$2a$10$XURPShQ5u3QRU1NR3tHgzeM2sOYc1jDB8Za3u4.sO91PiuM98bW1C', 'Moderator', 'User', 0),
+    (NOW(), NOW(), 'normal_user', 'user@example.com', '$2a$10$XURPShQ5u3QRU1NR3tHgzeM2sOYc1jDB8Za3u4.sO91PiuM98bW1C', 'Normal', 'User', 0);
+
+-- Kullanıcı-rol ilişkileri
+INSERT INTO user_role (user_id, role_id)
+VALUES 
+    (1, 1), -- admin_user -> ROLE_ADMIN
+    (2, 2), -- moderator_user -> ROLE_MODERATOR
+    (3, 3); -- normal_user -> ROLE_USER==== Dosya: ./user-service/target/classes/application.yml ====
+spring:
+  application:
+    name: user-service
+  datasource:
+    url: ${DB_URL:jdbc:mariadb://localhost:3306/eksidb?useSSL=false&serverTimezone=UTC}
+    username: ${DB_USERNAME:eksiclone_user}
+    password: ${DB_PASSWORD:eksiclone_password}
+    driver-class-name: org.mariadb.jdbc.Driver
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
+    show-sql: true
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+  cloud:
+    loadbalancer:
+      retry:
+        enabled: true
+server:
+  port: 8082
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs==== Dosya: ./user-service/target/classes/META-INF/maven/in.batur.eksiclone/user-service/pom.xml ====
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>in.batur.eksiclone</groupId>
+		<artifactId>eksiclone</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+	<artifactId>user-service</artifactId>
+	<name>user-service</name>
+	<description>User Service for Eksiclone</description>
+	<properties>
+		<java.version>21</java.version>
+		<spring-cloud.version>2024.0.1</spring-cloud.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>mysql</groupId>
+					<artifactId>mysql-connector-java</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.5.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.mariadb.jdbc</groupId>
+			<artifactId>mariadb-java-client</artifactId>
+			<version>3.4.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-mysql</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>in.batur.eksiclone</groupId>
+			<artifactId>entity</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>in.batur.eksiclone</groupId>
+			<artifactId>repository</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>${spring-cloud.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>==== Dosya: ./user-service/pom.xml ====
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>in.batur.eksiclone</groupId>
+		<artifactId>eksiclone</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+	<artifactId>user-service</artifactId>
+	<name>user-service</name>
+	<description>User Service for Eksiclone</description>
+	<properties>
+		<java.version>21</java.version>
+		<spring-cloud.version>2024.0.1</spring-cloud.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>mysql</groupId>
+					<artifactId>mysql-connector-java</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.5.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.mariadb.jdbc</groupId>
+			<artifactId>mariadb-java-client</artifactId>
+			<version>3.4.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-mysql</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>in.batur.eksiclone</groupId>
+			<artifactId>entity</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>in.batur.eksiclone</groupId>
+			<artifactId>repository</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>${spring-cloud.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>==== Dosya: ./user-service/src/main/resources/db/migration/V1__init_eksidb.sql ====
+CREATE TABLE users (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    created_date DATETIME,
+    last_updated_date DATETIME,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    last_name VARCHAR(255) NOT NULL,
+    version BIGINT
+);
+
+CREATE TABLE roles (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    created_date DATETIME,
+    last_updated_date DATETIME,
+    role_name VARCHAR(50) NOT NULL UNIQUE,
+    version BIGINT
+);
+
+CREATE TABLE user_role (
+    user_id BIGINT NOT NULL,
+    role_id BIGINT NOT NULL,
+    PRIMARY KEY (user_id, role_id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (role_id) REFERENCES roles(id)
+);
+
+-- Varsayılan roller
+INSERT INTO roles (created_date, last_updated_date, role_name, version)
+VALUES 
+    (NOW(), NOW(), 'ROLE_ADMIN', 0),
+    (NOW(), NOW(), 'ROLE_MODERATOR', 0),
+    (NOW(), NOW(), 'ROLE_USER', 0);
+
+-- Varsayılan kullanıcılar
+INSERT INTO users (created_date, last_updated_date, username, email, password, name, last_name, version)
+VALUES 
+    (NOW(), NOW(), 'admin_user', 'admin@example.com', '$2a$10$XURPShQ5u3QRU1NR3tHgzeM2sOYc1jDB8Za3u4.sO91PiuM98bW1C', 'Admin', 'User', 0),
+    (NOW(), NOW(), 'moderator_user', 'moderator@example.com', '$2a$10$XURPShQ5u3QRU1NR3tHgzeM2sOYc1jDB8Za3u4.sO91PiuM98bW1C', 'Moderator', 'User', 0),
+    (NOW(), NOW(), 'normal_user', 'user@example.com', '$2a$10$XURPShQ5u3QRU1NR3tHgzeM2sOYc1jDB8Za3u4.sO91PiuM98bW1C', 'Normal', 'User', 0);
+
+-- Kullanıcı-rol ilişkileri
+INSERT INTO user_role (user_id, role_id)
+VALUES 
+    (1, 1), -- admin_user -> ROLE_ADMIN
+    (2, 2), -- moderator_user -> ROLE_MODERATOR
+    (3, 3); -- normal_user -> ROLE_USER==== Dosya: ./user-service/src/main/resources/application.yml ====
+spring:
+  application:
+    name: user-service
+  datasource:
+    url: ${DB_URL:jdbc:mariadb://localhost:3306/eksidb?useSSL=false&serverTimezone=UTC}
+    username: ${DB_USERNAME:eksiclone_user}
+    password: ${DB_PASSWORD:eksiclone_password}
+    driver-class-name: org.mariadb.jdbc.Driver
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
+    show-sql: true
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+  cloud:
+    loadbalancer:
+      retry:
+        enabled: true
+server:
+  port: 8082
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs==== Dosya: ./user-service/src/main/java/in/batur/eksiclone/userservice/UserServiceApplication.java ====
+package in.batur.eksiclone.userservice;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+
+@SpringBootApplication
+@EnableDiscoveryClient
+@EnableJpaRepositories(basePackages = "in.batur.eksiclone.repository")
+@EntityScan(basePackages = "in.batur.eksiclone.entity")
+public class UserServiceApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(UserServiceApplication.class, args);
+    }
+}==== Dosya: ./user-service/src/main/java/in/batur/eksiclone/userservice/exception/GlobalExceptionHandler.java ====
+package in.batur.eksiclone.userservice.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+
+@ControllerAdvice
+public class GlobalExceptionHandler {
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleException(Exception e) {
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("An error occurred: " + e.getMessage());
+    }
+}==== Dosya: ./user-service/src/main/java/in/batur/eksiclone/userservice/controller/UserController.java ====
+package in.batur.eksiclone.userservice.controller;
+
+import in.batur.eksiclone.userservice.service.UserDTO;
+import in.batur.eksiclone.userservice.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/users")
+@Tag(name = "User API", description = "APIs for managing users in Eksiclone")
+public class UserController {
+    @Autowired
+    private UserService userService;
+
+    @Operation(summary = "Get all users", description = "Returns a list of all users with their details")
+    @GetMapping
+    public List<UserDTO> findAll() {
+        return userService.findAll();
+    }
+}==== Dosya: ./user-service/src/main/java/in/batur/eksiclone/userservice/service/UserDTO.java ====
+package in.batur.eksiclone.userservice.service;
+
+import java.util.List;
+
+public class UserDTO {
+    private Long id;
+    private String username;
+    private String email;
+    private String name;
+    private String lastName;
+    private List<String> roleNames;
+
+    // Getters and setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
+    public List<String> getRoleNames() { return roleNames; }
+    public void setRoleNames(List<String> roleNames) { this.roleNames = roleNames; }
+}==== Dosya: ./user-service/src/main/java/in/batur/eksiclone/userservice/service/UserServiceImpl.java ====
+package in.batur.eksiclone.userservice.service;
+
+import in.batur.eksiclone.entity.User;
+import in.batur.eksiclone.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@Transactional
+@Slf4j
+public class UserServiceImpl implements UserService {
+    @Autowired
+    private UserRepository userRepository;
+
+    @Override
+    public List<UserDTO> findAll() {
+        log.info("Fetching all users");
+        List<User> users = userRepository.findAll();
+        List<UserDTO> userDTOs = users.stream().map(user -> {
+            UserDTO dto = new UserDTO();
+            dto.setId(user.getId());
+            dto.setUsername(user.getUsername());
+            dto.setEmail(user.getEmail());
+            dto.setName(user.getName());
+            dto.setLastName(user.getLastName());
+            dto.setRoleNames(user.getRoles().stream()
+                .map(role -> role.getRoleName())
+                .collect(Collectors.toList()));
+            return dto;
+        }).collect(Collectors.toList());
+        log.info("Found {} users", userDTOs.size());
+        return userDTOs;
+    }
+}==== Dosya: ./user-service/src/main/java/in/batur/eksiclone/userservice/service/UserService.java ====
+package in.batur.eksiclone.userservice.service;
+
+import java.util.List;
+
+public interface UserService {
+    List<UserDTO> findAll();
+}==== Dosya: ./repository/target/classes/META-INF/maven/in.batur.eksiclone/repository/pom.xml ====
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>in.batur.eksiclone</groupId>
+        <artifactId>eksiclone</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>repository</artifactId>
+    <name>Eksi Clone Repository</name>
+    <description>Eksi Clone Repository Module</description>
+    <packaging>jar</packaging>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
+        <dependency>
+            <groupId>in.batur.eksiclone</groupId>
+            <artifactId>entity</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+</project>==== Dosya: ./repository/pom.xml ====
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>in.batur.eksiclone</groupId>
+        <artifactId>eksiclone</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>repository</artifactId>
+    <name>Eksi Clone Repository</name>
+    <description>Eksi Clone Repository Module</description>
+    <packaging>jar</packaging>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
+        <dependency>
+            <groupId>in.batur.eksiclone</groupId>
+            <artifactId>entity</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+</project>==== Dosya: ./repository/src/main/java/in/batur/eksiclone/repository/BaseRepository.java ====
+package in.batur.eksiclone.repository;
+
+import in.batur.eksiclone.entity.BaseEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.NoRepositoryBean;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@NoRepositoryBean
+public interface BaseRepository<T extends BaseEntity> extends JpaRepository<T, Long> {
+    List<T> findByCreatedDateAfter(LocalDateTime date);
+}==== Dosya: ./repository/src/main/java/in/batur/eksiclone/repository/RoleRepository.java ====
+package in.batur.eksiclone.repository;
+
+import in.batur.eksiclone.entity.Role;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+@Repository
+@Transactional
+public interface RoleRepository extends JpaRepository<Role, Long>, BaseRepository<Role> {
+}==== Dosya: ./repository/src/main/java/in/batur/eksiclone/repository/UserRepository.java ====
+package in.batur.eksiclone.repository;
+
+import in.batur.eksiclone.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+@Repository
+@Transactional
+public interface UserRepository extends JpaRepository<User, Long>, BaseRepository<User> {
+	
+}==== Dosya: ./eureka-server/target/classes/application.yml ====
+spring:
+  application:
+    name: eureka-server
+server:
+  port: 8761
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+  server:
+    enable-self-preservation: true==== Dosya: ./eureka-server/pom.xml ====
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>in.batur.eksiclone</groupId>
+        <artifactId>eksiclone</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+    <artifactId>eureka-server</artifactId>
+    <name>Eksi Clone Eureka Server</name>
+    <description>Eksi Clone Eureka Server Module</description>
+    <packaging>jar</packaging>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
+        </dependency>
+        <dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>==== Dosya: ./eureka-server/src/main/resources/application.yml ====
+spring:
+  application:
+    name: eureka-server
+server:
+  port: 8761
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+  server:
+    enable-self-preservation: true==== Dosya: ./eureka-server/src/main/java/in/batur/eksiclone/eurekaserver/EurekaServerApplication.java ====
+package in.batur.eksiclone.eurekaserver;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
+
+@SpringBootApplication
+@EnableEurekaServer
+public class EurekaServerApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(EurekaServerApplication.class, args);
+    }
+}==== Dosya: ./pom.xml ====
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.4.5</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>in.batur.eksiclone</groupId>
+    <artifactId>eksiclone</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>Eksi Clone</name>
+    <description>Eksi Clone Application</description>
+    <packaging>pom</packaging>
+
+    <properties>
+        <java.version>21</java.version>
+        <spring-cloud.version>2024.0.1</spring-cloud.version>
+    </properties>
+
+    <modules>
+        <module>entity</module>
+        <module>repository</module>
+        <module>user-service</module>
+        <module>role-service</module>
+        <module>gateway</module>
+        <module>eureka-server</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>==== Dosya: ./gateway/target/classes/application.yml ====
+server:
+  port: 8080
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/v1/users/**
+        - id: role-service
+          uri: lb://role-service
+          predicates:
+            - Path=/api/v1/roles/**
+    loadbalancer:
+      retry:
+        enabled: true
+  main:
+    web-application-type: reactive
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+==== Dosya: ./gateway/pom.xml ====
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>gateway</artifactId>
+    <packaging>jar</packaging>
+    <parent>
+        <groupId>in.batur.eksiclone</groupId>
+        <artifactId>eksiclone</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+    <properties>
+        <java.version>21</java.version>
+        <spring-cloud.version>2024.0.1</spring-cloud.version>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+        <dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-gateway</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>==== Dosya: ./gateway/src/main/resources/application.yml ====
+server:
+  port: 8080
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/v1/users/**
+        - id: role-service
+          uri: lb://role-service
+          predicates:
+            - Path=/api/v1/roles/**
+    loadbalancer:
+      retry:
+        enabled: true
+  main:
+    web-application-type: reactive
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+==== Dosya: ./gateway/src/main/java/in/batur/eksiclone/gateway/GatewayApplication.java ====
+package in.batur.eksiclone.gateway;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+
+@SpringBootApplication
+@EnableDiscoveryClient
+public class GatewayApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(GatewayApplication.class, args);
+    }
+}==== Dosya: ./role-service/target/classes/application.yml ====
+spring:
+  application:
+    name: role-service
+  datasource:
+    url: ${DB_URL:jdbc:mariadb://localhost:3306/eksidb?useSSL=false&serverTimezone=UTC}
+    username: ${DB_USERNAME:eksiclone_user}
+    password: ${DB_PASSWORD:eksiclone_password}
+    driver-class-name: org.mariadb.jdbc.Driver
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
+  flyway:
+    enabled: false
+  cloud:
+    loadbalancer:
+      retry:
+        enabled: true
+server:
+  port: 8083
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs==== Dosya: ./role-service/target/classes/META-INF/maven/in.batur.eksiclone/role-service/pom.xml ====
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>in.batur.eksiclone</groupId>
+		<artifactId>eksiclone</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+	<artifactId>role-service</artifactId>
+	<name>Eksi Clone Role Service</name>
+	<description>Eksi Clone Role Service Module</description>
+	<packaging>jar</packaging>
+	<properties>
+		<java.version>21</java.version>
+		<spring-cloud.version>2024.0.1</spring-cloud.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>mysql</groupId>
+					<artifactId>mysql-connector-java</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.mariadb.jdbc</groupId>
+			<artifactId>mariadb-java-client</artifactId>
+			<version>3.4.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>in.batur.eksiclone</groupId>
+			<artifactId>entity</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>in.batur.eksiclone</groupId>
+			<artifactId>repository</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.5.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>${spring-cloud.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>==== Dosya: ./role-service/pom.xml ====
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>in.batur.eksiclone</groupId>
+		<artifactId>eksiclone</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+	<artifactId>role-service</artifactId>
+	<name>Eksi Clone Role Service</name>
+	<description>Eksi Clone Role Service Module</description>
+	<packaging>jar</packaging>
+	<properties>
+		<java.version>21</java.version>
+		<spring-cloud.version>2024.0.1</spring-cloud.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>mysql</groupId>
+					<artifactId>mysql-connector-java</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.mariadb.jdbc</groupId>
+			<artifactId>mariadb-java-client</artifactId>
+			<version>3.4.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>in.batur.eksiclone</groupId>
+			<artifactId>entity</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>in.batur.eksiclone</groupId>
+			<artifactId>repository</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.5.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>${spring-cloud.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>==== Dosya: ./role-service/src/main/resources/application.yml ====
+spring:
+  application:
+    name: role-service
+  datasource:
+    url: ${DB_URL:jdbc:mariadb://localhost:3306/eksidb?useSSL=false&serverTimezone=UTC}
+    username: ${DB_USERNAME:eksiclone_user}
+    password: ${DB_PASSWORD:eksiclone_password}
+    driver-class-name: org.mariadb.jdbc.Driver
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
+  flyway:
+    enabled: false
+  cloud:
+    loadbalancer:
+      retry:
+        enabled: true
+server:
+  port: 8083
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs==== Dosya: ./role-service/src/main/java/in/batur/eksiclone/roleservice/RoleServiceApplication.java ====
+package in.batur.eksiclone.roleservice;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+
+@SpringBootApplication
+@EnableDiscoveryClient
+@EnableJpaRepositories(basePackages = "in.batur.eksiclone.repository")
+@EntityScan(basePackages = "in.batur.eksiclone.entity")
+public class RoleServiceApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(RoleServiceApplication.class, args);
+    }
+}==== Dosya: ./role-service/src/main/java/in/batur/eksiclone/roleservice/exception/GlobalExceptionHandler.java ====
+package in.batur.eksiclone.roleservice.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+
+@ControllerAdvice
+public class GlobalExceptionHandler {
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleException(Exception e) {
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("An error occurred: " + e.getMessage());
+    }
+}==== Dosya: ./role-service/src/main/java/in/batur/eksiclone/roleservice/controller/RoleController.java ====
+package in.batur.eksiclone.roleservice.controller;
+
+import in.batur.eksiclone.roleservice.service.RoleDTO;
+import in.batur.eksiclone.roleservice.service.RoleService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/roles")
+@Tag(name = "Role API", description = "APIs for managing roles in Eksiclone")
+public class RoleController {
+    @Autowired
+    private RoleService roleService;
+
+    @Operation(summary = "Get all roles", description = "Returns a list of all roles with their details")
+    @GetMapping
+    public List<RoleDTO> findAll() {
+        return roleService.findAll();
+    }
+}==== Dosya: ./role-service/src/main/java/in/batur/eksiclone/roleservice/service/RoleDTO.java ====
+package in.batur.eksiclone.roleservice.service;
+
+public class RoleDTO {
+    private Long id;
+    private String roleName;
+
+    // Getters and setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getRoleName() { return roleName; }
+    public void setRoleName(String roleName) { this.roleName = roleName; }
+}==== Dosya: ./role-service/src/main/java/in/batur/eksiclone/roleservice/service/RoleService.java ====
+package in.batur.eksiclone.roleservice.service;
+
+import java.util.List;
+
+public interface RoleService {
+    List<RoleDTO> findAll();
+}==== Dosya: ./role-service/src/main/java/in/batur/eksiclone/roleservice/service/RoleServiceImpl.java ====
+package in.batur.eksiclone.roleservice.service;
+
+import in.batur.eksiclone.entity.Role;
+import in.batur.eksiclone.repository.RoleRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@Transactional
+@Slf4j
+public class RoleServiceImpl implements RoleService {
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Override
+    public List<RoleDTO> findAll() {
+        log.info("Fetching all roles");
+        List<Role> roles = roleRepository.findAll();
+        List<RoleDTO> roleDTOs = roles.stream().map(role -> {
+            RoleDTO dto = new RoleDTO();
+            dto.setId(role.getId());
+            dto.setRoleName(role.getRoleName());
+            return dto;
+        }).collect(Collectors.toList());
+        log.info("Found {} roles", roleDTOs.size());
+        return roleDTOs;
+    }
+}==== Dosya: ./logs/role-service.log ====
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.5)
+
+2025-05-08T22:28:57.927+03:00  INFO 1834293 --- [role-service] [           main] i.b.e.r.RoleServiceApplication           : Starting RoleServiceApplication v0.0.1-SNAPSHOT using Java 21.0.6 with PID 1834293 (/home/aqui/eclipse-workspace/eksiclone/role-service/target/role-service-0.0.1-SNAPSHOT.jar started by aqui in /home/aqui/eclipse-workspace/eksiclone)
+2025-05-08T22:28:57.930+03:00  INFO 1834293 --- [role-service] [           main] i.b.e.r.RoleServiceApplication           : No active profile set, falling back to 1 default profile: "default"
+2025-05-08T22:28:58.431+03:00  INFO 1834293 --- [role-service] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-05-08T22:28:58.541+03:00  INFO 1834293 --- [role-service] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 104 ms. Found 2 JPA repository interfaces.
+2025-05-08T22:28:58.858+03:00  INFO 1834293 --- [role-service] [           main] o.s.cloud.context.scope.GenericScope     : BeanFactory id=9c1b3410-9761-38c6-9d43-baf2752d2c1b
+2025-05-08T22:28:59.133+03:00  INFO 1834293 --- [role-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8083 (http)
+2025-05-08T22:28:59.143+03:00  INFO 1834293 --- [role-service] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-05-08T22:28:59.143+03:00  INFO 1834293 --- [role-service] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.40]
+2025-05-08T22:28:59.171+03:00  INFO 1834293 --- [role-service] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-05-08T22:28:59.172+03:00  INFO 1834293 --- [role-service] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1190 ms
+2025-05-08T22:28:59.285+03:00  INFO 1834293 --- [role-service] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-05-08T22:28:59.321+03:00  INFO 1834293 --- [role-service] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.13.Final
+2025-05-08T22:28:59.342+03:00  INFO 1834293 --- [role-service] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-05-08T22:28:59.511+03:00  INFO 1834293 --- [role-service] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-05-08T22:28:59.530+03:00  INFO 1834293 --- [role-service] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-05-08T22:28:59.599+03:00  INFO 1834293 --- [role-service] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.mariadb.jdbc.Connection@d13379e
+2025-05-08T22:28:59.601+03:00  INFO 1834293 --- [role-service] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-05-08T22:28:59.620+03:00  WARN 1834293 --- [role-service] [           main] org.hibernate.orm.deprecation            : HHH90000025: MariaDBDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-05-08T22:28:59.631+03:00  INFO 1834293 --- [role-service] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 10.11.11
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-05-08T22:29:00.122+03:00  INFO 1834293 --- [role-service] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-05-08T22:29:00.123+03:00  INFO 1834293 --- [role-service] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-05-08T22:29:00.511+03:00  INFO 1834293 --- [role-service] [           main] o.s.v.b.OptionalValidatorFactoryBean     : Failed to set up a Bean Validation provider: jakarta.validation.NoProviderFoundException: Unable to create a Configuration, because no Jakarta Bean Validation provider could be found. Add a provider like Hibernate Validator (RI) to your classpath.
+2025-05-08T22:29:00.965+03:00  INFO 1834293 --- [role-service] [           main] DiscoveryClientOptionalArgsConfiguration : Eureka HTTP Client uses RestTemplate.
+2025-05-08T22:29:01.031+03:00  INFO 1834293 --- [role-service] [           main] o.s.c.n.eureka.InstanceInfoFactory       : Setting initial instance status as: STARTING
+2025-05-08T22:29:01.052+03:00  INFO 1834293 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Initializing Eureka in region us-east-1
+2025-05-08T22:29:01.055+03:00  INFO 1834293 --- [role-service] [           main] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
+2025-05-08T22:29:01.062+03:00  INFO 1834293 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Disable delta property : false
+2025-05-08T22:29:01.063+03:00  INFO 1834293 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Single vip registry refresh property : null
+2025-05-08T22:29:01.063+03:00  INFO 1834293 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Force full registry fetch : false
+2025-05-08T22:29:01.063+03:00  INFO 1834293 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Application is null : false
+2025-05-08T22:29:01.063+03:00  INFO 1834293 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Registered Applications size is zero : true
+2025-05-08T22:29:01.063+03:00  INFO 1834293 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Application version is -1: true
+2025-05-08T22:29:01.063+03:00  INFO 1834293 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Getting all instance registry info from the eureka server
+2025-05-08T22:29:01.348+03:00  INFO 1834293 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : The response status is 200
+2025-05-08T22:29:01.350+03:00  INFO 1834293 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Starting heartbeat executor: renew interval is: 30
+2025-05-08T22:29:01.351+03:00  INFO 1834293 --- [role-service] [           main] c.n.discovery.InstanceInfoReplicator     : InstanceInfoReplicator onDemand update allowed rate per min is 4
+2025-05-08T22:29:01.352+03:00  INFO 1834293 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Discovery Client initialized at timestamp 1746732541352 with initial instances count: 2
+2025-05-08T22:29:01.355+03:00  INFO 1834293 --- [role-service] [           main] o.s.c.n.e.s.EurekaServiceRegistry        : Registering application ROLE-SERVICE with eureka with status UP
+2025-05-08T22:29:01.356+03:00  INFO 1834293 --- [role-service] [           main] com.netflix.discovery.DiscoveryClient    : Saw local status change event StatusChangeEvent [timestamp=1746732541356, current=UP, previous=STARTING]
+2025-05-08T22:29:01.358+03:00  INFO 1834293 --- [role-service] [foReplicator-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ROLE-SERVICE/10.22.167.145:role-service:8083: registering service...
+2025-05-08T22:29:01.366+03:00  INFO 1834293 --- [role-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8083 (http) with context path '/'
+2025-05-08T22:29:01.367+03:00  INFO 1834293 --- [role-service] [           main] .s.c.n.e.s.EurekaAutoServiceRegistration : Updating port to 8083
+2025-05-08T22:29:01.387+03:00  INFO 1834293 --- [role-service] [           main] i.b.e.r.RoleServiceApplication           : Started RoleServiceApplication in 3.858 seconds (process running for 4.257)
+2025-05-08T22:29:01.395+03:00  INFO 1834293 --- [role-service] [foReplicator-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ROLE-SERVICE/10.22.167.145:role-service:8083 - registration status: 204
+2025-05-08T22:29:20.305+03:00  INFO 1834293 --- [role-service] [nio-8083-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-05-08T22:29:20.305+03:00  INFO 1834293 --- [role-service] [nio-8083-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-05-08T22:29:20.306+03:00  INFO 1834293 --- [role-service] [nio-8083-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2025-05-09T09:21:15.066+03:00  INFO 1834293 --- [role-service] [beatExecutor-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ROLE-SERVICE/10.22.167.145:role-service:8083 - Re-registering apps/ROLE-SERVICE
+2025-05-09T09:21:15.066+03:00  INFO 1834293 --- [role-service] [beatExecutor-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ROLE-SERVICE/10.22.167.145:role-service:8083: registering service...
+2025-05-09T09:21:15.080+03:00  INFO 1834293 --- [role-service] [beatExecutor-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ROLE-SERVICE/10.22.167.145:role-service:8083 - registration status: 204
+2025-05-09T09:21:44.598+03:00  INFO 1834293 --- [role-service] [rap-executor-%d] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
+2025-05-09T09:22:46.949+03:00  INFO 1834293 --- [role-service] [ionShutdownHook] o.s.c.n.e.s.EurekaServiceRegistry        : Unregistering application ROLE-SERVICE with eureka with status DOWN
+2025-05-09T09:22:46.950+03:00  INFO 1834293 --- [role-service] [ionShutdownHook] com.netflix.discovery.DiscoveryClient    : Saw local status change event StatusChangeEvent [timestamp=1746771766950, current=DOWN, previous=UP]
+2025-05-09T09:22:46.950+03:00  INFO 1834293 --- [role-service] [foReplicator-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ROLE-SERVICE/10.22.167.145:role-service:8083: registering service...
+2025-05-09T09:22:46.953+03:00  INFO 1834293 --- [role-service] [ionShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2025-05-09T09:22:46.960+03:00  INFO 1834293 --- [role-service] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+2025-05-09T09:22:46.963+03:00  INFO 1834293 --- [role-service] [foReplicator-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ROLE-SERVICE/10.22.167.145:role-service:8083 - registration status: 204
+2025-05-09T09:22:46.971+03:00  INFO 1834293 --- [role-service] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-05-09T09:22:46.973+03:00  INFO 1834293 --- [role-service] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-05-09T09:22:46.978+03:00  INFO 1834293 --- [role-service] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2025-05-09T09:22:46.980+03:00  INFO 1834293 --- [role-service] [ionShutdownHook] com.netflix.discovery.DiscoveryClient    : Shutting down DiscoveryClient ...
+==== Dosya: ./logs/gateway.log ====
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.5)
+
+2025-05-08T22:28:37.810+03:00  INFO 1833994 --- [gateway] [           main] i.b.e.gateway.GatewayApplication         : Starting GatewayApplication v0.0.1-SNAPSHOT using Java 21.0.6 with PID 1833994 (/home/aqui/eclipse-workspace/eksiclone/gateway/target/gateway-0.0.1-SNAPSHOT.jar started by aqui in /home/aqui/eclipse-workspace/eksiclone)
+2025-05-08T22:28:37.812+03:00  INFO 1833994 --- [gateway] [           main] i.b.e.gateway.GatewayApplication         : No active profile set, falling back to 1 default profile: "default"
+2025-05-08T22:28:38.463+03:00  INFO 1833994 --- [gateway] [           main] o.s.cloud.context.scope.GenericScope     : BeanFactory id=df6cb567-0687-326d-8398-48875fabba9a
+2025-05-08T22:28:39.100+03:00  INFO 1833994 --- [gateway] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [After]
+2025-05-08T22:28:39.101+03:00  INFO 1833994 --- [gateway] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Before]
+2025-05-08T22:28:39.101+03:00  INFO 1833994 --- [gateway] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Between]
+2025-05-08T22:28:39.101+03:00  INFO 1833994 --- [gateway] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Cookie]
+2025-05-08T22:28:39.101+03:00  INFO 1833994 --- [gateway] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Header]
+2025-05-08T22:28:39.101+03:00  INFO 1833994 --- [gateway] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Host]
+2025-05-08T22:28:39.101+03:00  INFO 1833994 --- [gateway] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Method]
+2025-05-08T22:28:39.101+03:00  INFO 1833994 --- [gateway] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Path]
+2025-05-08T22:28:39.101+03:00  INFO 1833994 --- [gateway] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Query]
+2025-05-08T22:28:39.101+03:00  INFO 1833994 --- [gateway] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [ReadBody]
+2025-05-08T22:28:39.101+03:00  INFO 1833994 --- [gateway] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [RemoteAddr]
+2025-05-08T22:28:39.101+03:00  INFO 1833994 --- [gateway] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [XForwardedRemoteAddr]
+2025-05-08T22:28:39.101+03:00  INFO 1833994 --- [gateway] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Weight]
+2025-05-08T22:28:39.101+03:00  INFO 1833994 --- [gateway] [           main] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [CloudFoundryRouteService]
+2025-05-08T22:28:39.313+03:00  INFO 1833994 --- [gateway] [           main] DiscoveryClientOptionalArgsConfiguration : Eureka HTTP Client uses RestTemplate.
+2025-05-08T22:28:39.350+03:00  WARN 1833994 --- [gateway] [           main] iguration$LoadBalancerCaffeineWarnLogger : Spring Cloud LoadBalancer is currently working with the default cache. While this cache implementation is useful for development and tests, it's recommended to use Caffeine cache in production.You can switch to using Caffeine cache, by adding it and org.springframework.cache.caffeine.CaffeineCacheManager to the classpath.
+2025-05-08T22:28:39.375+03:00  INFO 1833994 --- [gateway] [           main] o.s.c.n.eureka.InstanceInfoFactory       : Setting initial instance status as: STARTING
+2025-05-08T22:28:39.392+03:00  INFO 1833994 --- [gateway] [           main] com.netflix.discovery.DiscoveryClient    : Initializing Eureka in region us-east-1
+2025-05-08T22:28:39.395+03:00  INFO 1833994 --- [gateway] [           main] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
+2025-05-08T22:28:39.402+03:00  INFO 1833994 --- [gateway] [           main] com.netflix.discovery.DiscoveryClient    : Disable delta property : false
+2025-05-08T22:28:39.402+03:00  INFO 1833994 --- [gateway] [           main] com.netflix.discovery.DiscoveryClient    : Single vip registry refresh property : null
+2025-05-08T22:28:39.402+03:00  INFO 1833994 --- [gateway] [           main] com.netflix.discovery.DiscoveryClient    : Force full registry fetch : false
+2025-05-08T22:28:39.402+03:00  INFO 1833994 --- [gateway] [           main] com.netflix.discovery.DiscoveryClient    : Application is null : false
+2025-05-08T22:28:39.402+03:00  INFO 1833994 --- [gateway] [           main] com.netflix.discovery.DiscoveryClient    : Registered Applications size is zero : true
+2025-05-08T22:28:39.402+03:00  INFO 1833994 --- [gateway] [           main] com.netflix.discovery.DiscoveryClient    : Application version is -1: true
+2025-05-08T22:28:39.402+03:00  INFO 1833994 --- [gateway] [           main] com.netflix.discovery.DiscoveryClient    : Getting all instance registry info from the eureka server
+2025-05-08T22:28:39.755+03:00  INFO 1833994 --- [gateway] [           main] com.netflix.discovery.DiscoveryClient    : The response status is 200
+2025-05-08T22:28:39.756+03:00  INFO 1833994 --- [gateway] [           main] com.netflix.discovery.DiscoveryClient    : Starting heartbeat executor: renew interval is: 30
+2025-05-08T22:28:39.757+03:00  INFO 1833994 --- [gateway] [           main] c.n.discovery.InstanceInfoReplicator     : InstanceInfoReplicator onDemand update allowed rate per min is 4
+2025-05-08T22:28:39.759+03:00  INFO 1833994 --- [gateway] [           main] com.netflix.discovery.DiscoveryClient    : Discovery Client initialized at timestamp 1746732519758 with initial instances count: 0
+2025-05-08T22:28:39.761+03:00  INFO 1833994 --- [gateway] [           main] o.s.c.n.e.s.EurekaServiceRegistry        : Registering application GATEWAY with eureka with status UP
+2025-05-08T22:28:39.761+03:00  INFO 1833994 --- [gateway] [           main] com.netflix.discovery.DiscoveryClient    : Saw local status change event StatusChangeEvent [timestamp=1746732519761, current=UP, previous=STARTING]
+2025-05-08T22:28:39.763+03:00  INFO 1833994 --- [gateway] [foReplicator-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_GATEWAY/10.22.167.145:gateway:8080: registering service...
+2025-05-08T22:28:39.858+03:00  INFO 1833994 --- [gateway] [           main] o.s.b.web.embedded.netty.NettyWebServer  : Netty started on port 8080 (http)
+2025-05-08T22:28:39.860+03:00  INFO 1833994 --- [gateway] [           main] .s.c.n.e.s.EurekaAutoServiceRegistration : Updating port to 8080
+2025-05-08T22:28:39.869+03:00  INFO 1833994 --- [gateway] [foReplicator-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_GATEWAY/10.22.167.145:gateway:8080 - registration status: 204
+2025-05-08T22:28:39.890+03:00  INFO 1833994 --- [gateway] [           main] i.b.e.gateway.GatewayApplication         : Started GatewayApplication in 2.492 seconds (process running for 2.825)
+2025-05-08T22:29:09.452+03:00  WARN 1833994 --- [gateway] [or-http-epoll-2] o.s.c.l.core.RoundRobinLoadBalancer      : No servers available for service: role-service
+2025-05-08T22:29:09.758+03:00  INFO 1833994 --- [gateway] [reshExecutor-%d] com.netflix.discovery.DiscoveryClient    : Disable delta property : false
+2025-05-08T22:29:09.759+03:00  INFO 1833994 --- [gateway] [reshExecutor-%d] com.netflix.discovery.DiscoveryClient    : Single vip registry refresh property : null
+2025-05-08T22:29:09.759+03:00  INFO 1833994 --- [gateway] [reshExecutor-%d] com.netflix.discovery.DiscoveryClient    : Force full registry fetch : false
+2025-05-08T22:29:09.759+03:00  INFO 1833994 --- [gateway] [reshExecutor-%d] com.netflix.discovery.DiscoveryClient    : Application is null : false
+2025-05-08T22:29:09.759+03:00  INFO 1833994 --- [gateway] [reshExecutor-%d] com.netflix.discovery.DiscoveryClient    : Registered Applications size is zero : true
+2025-05-08T22:29:09.760+03:00  INFO 1833994 --- [gateway] [reshExecutor-%d] com.netflix.discovery.DiscoveryClient    : Application version is -1: false
+2025-05-08T22:29:09.760+03:00  INFO 1833994 --- [gateway] [reshExecutor-%d] com.netflix.discovery.DiscoveryClient    : Getting all instance registry info from the eureka server
+2025-05-08T22:29:09.784+03:00  INFO 1833994 --- [gateway] [reshExecutor-%d] com.netflix.discovery.DiscoveryClient    : The response status is 200
+2025-05-09T09:21:22.938+03:00  INFO 1833994 --- [gateway] [rap-executor-%d] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
+2025-05-09T09:22:51.022+03:00  INFO 1833994 --- [gateway] [ionShutdownHook] o.s.c.n.e.s.EurekaServiceRegistry        : Unregistering application GATEWAY with eureka with status DOWN
+2025-05-09T09:22:51.023+03:00  INFO 1833994 --- [gateway] [ionShutdownHook] com.netflix.discovery.DiscoveryClient    : Saw local status change event StatusChangeEvent [timestamp=1746771771023, current=DOWN, previous=UP]
+2025-05-09T09:22:51.023+03:00  INFO 1833994 --- [gateway] [foReplicator-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_GATEWAY/10.22.167.145:gateway:8080: registering service...
+2025-05-09T09:22:51.025+03:00  INFO 1833994 --- [gateway] [ionShutdownHook] o.s.b.w.embedded.netty.GracefulShutdown  : Commencing graceful shutdown. Waiting for active requests to complete
+2025-05-09T09:22:51.028+03:00  INFO 1833994 --- [gateway] [ netty-shutdown] o.s.b.w.embedded.netty.GracefulShutdown  : Graceful shutdown complete
+2025-05-09T09:22:51.041+03:00  INFO 1833994 --- [gateway] [foReplicator-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_GATEWAY/10.22.167.145:gateway:8080 - registration status: 204
+==== Dosya: ./logs/user-service.log ====
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.5)
+
+2025-05-08T22:28:48.029+03:00  INFO 1834130 --- [user-service] [           main] i.b.e.u.UserServiceApplication           : Starting UserServiceApplication v0.0.1-SNAPSHOT using Java 21.0.6 with PID 1834130 (/home/aqui/eclipse-workspace/eksiclone/user-service/target/user-service-0.0.1-SNAPSHOT.jar started by aqui in /home/aqui/eclipse-workspace/eksiclone)
+2025-05-08T22:28:48.030+03:00  INFO 1834130 --- [user-service] [           main] i.b.e.u.UserServiceApplication           : No active profile set, falling back to 1 default profile: "default"
+2025-05-08T22:28:48.554+03:00  INFO 1834130 --- [user-service] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-05-08T22:28:48.675+03:00  INFO 1834130 --- [user-service] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 115 ms. Found 2 JPA repository interfaces.
+2025-05-08T22:28:48.988+03:00  INFO 1834130 --- [user-service] [           main] o.s.cloud.context.scope.GenericScope     : BeanFactory id=4d0ed94a-7a9a-3cde-9d1c-bc761ee0cf3a
+2025-05-08T22:28:49.259+03:00  INFO 1834130 --- [user-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8082 (http)
+2025-05-08T22:28:49.269+03:00  INFO 1834130 --- [user-service] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-05-08T22:28:49.270+03:00  INFO 1834130 --- [user-service] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.40]
+2025-05-08T22:28:49.298+03:00  INFO 1834130 --- [user-service] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-05-08T22:28:49.299+03:00  INFO 1834130 --- [user-service] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1228 ms
+2025-05-08T22:28:49.471+03:00  INFO 1834130 --- [user-service] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-05-08T22:28:49.540+03:00  INFO 1834130 --- [user-service] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.mariadb.jdbc.Connection@4a660b34
+2025-05-08T22:28:49.541+03:00  INFO 1834130 --- [user-service] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-05-08T22:28:49.563+03:00  INFO 1834130 --- [user-service] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:mariadb://localhost/eksidb?user=eksiclone_user&password=********&serverTimezone=UTC&useSSL=false (MariaDB 10.11)
+2025-05-08T22:28:49.591+03:00  INFO 1834130 --- [user-service] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 1 migration (execution time 00:00.016s)
+2025-05-08T22:28:49.598+03:00  INFO 1834130 --- [user-service] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema `eksidb`: 1
+2025-05-08T22:28:49.600+03:00  INFO 1834130 --- [user-service] [           main] o.f.core.internal.command.DbMigrate      : Schema `eksidb` is up to date. No migration necessary.
+2025-05-08T22:28:49.661+03:00  INFO 1834130 --- [user-service] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-05-08T22:28:49.692+03:00  INFO 1834130 --- [user-service] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.13.Final
+2025-05-08T22:28:49.713+03:00  INFO 1834130 --- [user-service] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-05-08T22:28:49.874+03:00  INFO 1834130 --- [user-service] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-05-08T22:28:49.909+03:00  WARN 1834130 --- [user-service] [           main] org.hibernate.orm.deprecation            : HHH90000025: MariaDBDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-05-08T22:28:49.921+03:00  INFO 1834130 --- [user-service] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 10.11.11
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-05-08T22:28:50.460+03:00  INFO 1834130 --- [user-service] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-05-08T22:28:50.462+03:00  INFO 1834130 --- [user-service] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-05-08T22:28:50.834+03:00  INFO 1834130 --- [user-service] [           main] o.s.v.b.OptionalValidatorFactoryBean     : Failed to set up a Bean Validation provider: jakarta.validation.NoProviderFoundException: Unable to create a Configuration, because no Jakarta Bean Validation provider could be found. Add a provider like Hibernate Validator (RI) to your classpath.
+2025-05-08T22:28:51.235+03:00  INFO 1834130 --- [user-service] [           main] DiscoveryClientOptionalArgsConfiguration : Eureka HTTP Client uses RestTemplate.
+2025-05-08T22:28:51.305+03:00  INFO 1834130 --- [user-service] [           main] o.s.c.n.eureka.InstanceInfoFactory       : Setting initial instance status as: STARTING
+2025-05-08T22:28:51.325+03:00  INFO 1834130 --- [user-service] [           main] com.netflix.discovery.DiscoveryClient    : Initializing Eureka in region us-east-1
+2025-05-08T22:28:51.328+03:00  INFO 1834130 --- [user-service] [           main] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
+2025-05-08T22:28:51.336+03:00  INFO 1834130 --- [user-service] [           main] com.netflix.discovery.DiscoveryClient    : Disable delta property : false
+2025-05-08T22:28:51.337+03:00  INFO 1834130 --- [user-service] [           main] com.netflix.discovery.DiscoveryClient    : Single vip registry refresh property : null
+2025-05-08T22:28:51.337+03:00  INFO 1834130 --- [user-service] [           main] com.netflix.discovery.DiscoveryClient    : Force full registry fetch : false
+2025-05-08T22:28:51.337+03:00  INFO 1834130 --- [user-service] [           main] com.netflix.discovery.DiscoveryClient    : Application is null : false
+2025-05-08T22:28:51.337+03:00  INFO 1834130 --- [user-service] [           main] com.netflix.discovery.DiscoveryClient    : Registered Applications size is zero : true
+2025-05-08T22:28:51.337+03:00  INFO 1834130 --- [user-service] [           main] com.netflix.discovery.DiscoveryClient    : Application version is -1: true
+2025-05-08T22:28:51.337+03:00  INFO 1834130 --- [user-service] [           main] com.netflix.discovery.DiscoveryClient    : Getting all instance registry info from the eureka server
+2025-05-08T22:28:51.597+03:00  INFO 1834130 --- [user-service] [           main] com.netflix.discovery.DiscoveryClient    : The response status is 200
+2025-05-08T22:28:51.598+03:00  INFO 1834130 --- [user-service] [           main] com.netflix.discovery.DiscoveryClient    : Starting heartbeat executor: renew interval is: 30
+2025-05-08T22:28:51.599+03:00  INFO 1834130 --- [user-service] [           main] c.n.discovery.InstanceInfoReplicator     : InstanceInfoReplicator onDemand update allowed rate per min is 4
+2025-05-08T22:28:51.604+03:00  INFO 1834130 --- [user-service] [           main] com.netflix.discovery.DiscoveryClient    : Discovery Client initialized at timestamp 1746732531603 with initial instances count: 0
+2025-05-08T22:28:51.608+03:00  INFO 1834130 --- [user-service] [           main] o.s.c.n.e.s.EurekaServiceRegistry        : Registering application USER-SERVICE with eureka with status UP
+2025-05-08T22:28:51.609+03:00  INFO 1834130 --- [user-service] [           main] com.netflix.discovery.DiscoveryClient    : Saw local status change event StatusChangeEvent [timestamp=1746732531609, current=UP, previous=STARTING]
+2025-05-08T22:28:51.611+03:00  INFO 1834130 --- [user-service] [foReplicator-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_USER-SERVICE/10.22.167.145:user-service:8082: registering service...
+2025-05-08T22:28:51.618+03:00  INFO 1834130 --- [user-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8082 (http) with context path '/'
+2025-05-08T22:28:51.619+03:00  INFO 1834130 --- [user-service] [           main] .s.c.n.e.s.EurekaAutoServiceRegistration : Updating port to 8082
+2025-05-08T22:28:51.638+03:00  INFO 1834130 --- [user-service] [           main] i.b.e.u.UserServiceApplication           : Started UserServiceApplication in 4.149 seconds (process running for 4.536)
+2025-05-08T22:28:51.640+03:00  INFO 1834130 --- [user-service] [foReplicator-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_USER-SERVICE/10.22.167.145:user-service:8082 - registration status: 204
+2025-05-08T22:29:13.088+03:00  INFO 1834130 --- [user-service] [nio-8082-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-05-08T22:29:13.088+03:00  INFO 1834130 --- [user-service] [nio-8082-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-05-08T22:29:13.089+03:00  INFO 1834130 --- [user-service] [nio-8082-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2025-05-08T22:29:21.599+03:00  INFO 1834130 --- [user-service] [reshExecutor-%d] com.netflix.discovery.DiscoveryClient    : Disable delta property : false
+2025-05-08T22:29:21.600+03:00  INFO 1834130 --- [user-service] [reshExecutor-%d] com.netflix.discovery.DiscoveryClient    : Single vip registry refresh property : null
+2025-05-08T22:29:21.600+03:00  INFO 1834130 --- [user-service] [reshExecutor-%d] com.netflix.discovery.DiscoveryClient    : Force full registry fetch : false
+2025-05-08T22:29:21.601+03:00  INFO 1834130 --- [user-service] [reshExecutor-%d] com.netflix.discovery.DiscoveryClient    : Application is null : false
+2025-05-08T22:29:21.601+03:00  INFO 1834130 --- [user-service] [reshExecutor-%d] com.netflix.discovery.DiscoveryClient    : Registered Applications size is zero : true
+2025-05-08T22:29:21.601+03:00  INFO 1834130 --- [user-service] [reshExecutor-%d] com.netflix.discovery.DiscoveryClient    : Application version is -1: false
+2025-05-08T22:29:21.601+03:00  INFO 1834130 --- [user-service] [reshExecutor-%d] com.netflix.discovery.DiscoveryClient    : Getting all instance registry info from the eureka server
+2025-05-08T22:29:21.631+03:00  INFO 1834130 --- [user-service] [reshExecutor-%d] com.netflix.discovery.DiscoveryClient    : The response status is 200
+2025-05-09T09:21:34.872+03:00  INFO 1834130 --- [user-service] [rap-executor-%d] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
+2025-05-09T09:22:48.985+03:00  INFO 1834130 --- [user-service] [ionShutdownHook] o.s.c.n.e.s.EurekaServiceRegistry        : Unregistering application USER-SERVICE with eureka with status DOWN
+2025-05-09T09:22:48.986+03:00  INFO 1834130 --- [user-service] [ionShutdownHook] com.netflix.discovery.DiscoveryClient    : Saw local status change event StatusChangeEvent [timestamp=1746771768986, current=DOWN, previous=UP]
+2025-05-09T09:22:48.986+03:00  INFO 1834130 --- [user-service] [foReplicator-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_USER-SERVICE/10.22.167.145:user-service:8082: registering service...
+2025-05-09T09:22:48.989+03:00  INFO 1834130 --- [user-service] [ionShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2025-05-09T09:22:48.991+03:00  INFO 1834130 --- [user-service] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+2025-05-09T09:22:48.994+03:00  INFO 1834130 --- [user-service] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-05-09T09:22:48.995+03:00  INFO 1834130 --- [user-service] [foReplicator-%d] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_USER-SERVICE/10.22.167.145:user-service:8082 - registration status: 204
+2025-05-09T09:22:48.996+03:00  INFO 1834130 --- [user-service] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-05-09T09:22:48.999+03:00  INFO 1834130 --- [user-service] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2025-05-09T09:22:48.999+03:00  INFO 1834130 --- [user-service] [ionShutdownHook] com.netflix.discovery.DiscoveryClient    : Shutting down DiscoveryClient ...
+==== Dosya: ./logs/eureka-server.log ====
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.5)
+
+2025-05-08T22:28:12.900+03:00  INFO 1833564 --- [eureka-server] [           main] i.b.e.e.EurekaServerApplication          : Starting EurekaServerApplication v0.0.1-SNAPSHOT using Java 21.0.6 with PID 1833564 (/home/aqui/eclipse-workspace/eksiclone/eureka-server/target/eureka-server-0.0.1-SNAPSHOT.jar started by aqui in /home/aqui/eclipse-workspace/eksiclone)
+2025-05-08T22:28:12.903+03:00  INFO 1833564 --- [eureka-server] [           main] i.b.e.e.EurekaServerApplication          : No active profile set, falling back to 1 default profile: "default"
+2025-05-08T22:28:13.701+03:00  INFO 1833564 --- [eureka-server] [           main] o.s.cloud.context.scope.GenericScope     : BeanFactory id=cbb08d38-1e7b-36ac-b335-b20a005ab8f7
+2025-05-08T22:28:13.915+03:00  INFO 1833564 --- [eureka-server] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8761 (http)
+2025-05-08T22:28:13.926+03:00  INFO 1833564 --- [eureka-server] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-05-08T22:28:13.926+03:00  INFO 1833564 --- [eureka-server] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.40]
+2025-05-08T22:28:13.946+03:00  INFO 1833564 --- [eureka-server] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-05-08T22:28:13.947+03:00  INFO 1833564 --- [eureka-server] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 995 ms
+2025-05-08T22:28:14.607+03:00  INFO 1833564 --- [eureka-server] [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using JSON encoding codec LegacyJacksonJson
+2025-05-08T22:28:14.608+03:00  INFO 1833564 --- [eureka-server] [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using JSON decoding codec LegacyJacksonJson
+2025-05-08T22:28:14.712+03:00  INFO 1833564 --- [eureka-server] [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using XML encoding codec XStreamXml
+2025-05-08T22:28:14.712+03:00  INFO 1833564 --- [eureka-server] [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using XML decoding codec XStreamXml
+2025-05-08T22:28:14.807+03:00  INFO 1833564 --- [eureka-server] [           main] o.s.v.b.OptionalValidatorFactoryBean     : Failed to set up a Bean Validation provider: jakarta.validation.NoProviderFoundException: Unable to create a Configuration, because no Jakarta Bean Validation provider could be found. Add a provider like Hibernate Validator (RI) to your classpath.
+2025-05-08T22:28:15.294+03:00  WARN 1833564 --- [eureka-server] [           main] iguration$LoadBalancerCaffeineWarnLogger : Spring Cloud LoadBalancer is currently working with the default cache. While this cache implementation is useful for development and tests, it's recommended to use Caffeine cache in production.You can switch to using Caffeine cache, by adding it and org.springframework.cache.caffeine.CaffeineCacheManager to the classpath.
+2025-05-08T22:28:15.310+03:00  INFO 1833564 --- [eureka-server] [           main] o.s.c.n.eureka.InstanceInfoFactory       : Setting initial instance status as: STARTING
+2025-05-08T22:28:15.323+03:00  INFO 1833564 --- [eureka-server] [           main] com.netflix.discovery.DiscoveryClient    : Initializing Eureka in region us-east-1
+2025-05-08T22:28:15.323+03:00  INFO 1833564 --- [eureka-server] [           main] com.netflix.discovery.DiscoveryClient    : Client configured to neither register nor query for data.
+2025-05-08T22:28:15.324+03:00  INFO 1833564 --- [eureka-server] [           main] com.netflix.discovery.DiscoveryClient    : Discovery Client initialized at timestamp 1746732495323 with initial instances count: 0
+2025-05-08T22:28:15.355+03:00  INFO 1833564 --- [eureka-server] [           main] c.n.eureka.DefaultEurekaServerContext    : Initializing ...
+2025-05-08T22:28:15.357+03:00  INFO 1833564 --- [eureka-server] [           main] c.n.eureka.cluster.PeerEurekaNodes       : Adding new peer nodes [http://localhost:8761/eureka/]
+2025-05-08T22:28:15.430+03:00  INFO 1833564 --- [eureka-server] [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using JSON encoding codec LegacyJacksonJson
+2025-05-08T22:28:15.430+03:00  INFO 1833564 --- [eureka-server] [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using JSON decoding codec LegacyJacksonJson
+2025-05-08T22:28:15.430+03:00  INFO 1833564 --- [eureka-server] [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using XML encoding codec XStreamXml
+2025-05-08T22:28:15.430+03:00  INFO 1833564 --- [eureka-server] [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using XML decoding codec XStreamXml
+2025-05-08T22:28:15.456+03:00  INFO 1833564 --- [eureka-server] [           main] c.n.eureka.cluster.PeerEurekaNodes       : Replica node URL:  http://localhost:8761/eureka/
+2025-05-08T22:28:15.462+03:00  INFO 1833564 --- [eureka-server] [           main] c.n.e.registry.AbstractInstanceRegistry  : Finished initializing remote region registries. All known remote regions: []
+2025-05-08T22:28:15.462+03:00  INFO 1833564 --- [eureka-server] [           main] c.n.eureka.DefaultEurekaServerContext    : Initialized
+2025-05-08T22:28:15.471+03:00  INFO 1833564 --- [eureka-server] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint beneath base path '/actuator'
+2025-05-08T22:28:15.503+03:00  INFO 1833564 --- [eureka-server] [           main] o.s.c.n.e.s.EurekaServiceRegistry        : Registering application EUREKA-SERVER with eureka with status UP
+2025-05-08T22:28:15.512+03:00  INFO 1833564 --- [eureka-server] [       Thread-9] o.s.c.n.e.server.EurekaServerBootstrap   : isAws returned false
+2025-05-08T22:28:15.513+03:00  INFO 1833564 --- [eureka-server] [       Thread-9] o.s.c.n.e.server.EurekaServerBootstrap   : Initialized server context
+2025-05-08T22:28:15.513+03:00  INFO 1833564 --- [eureka-server] [       Thread-9] c.n.e.r.PeerAwareInstanceRegistryImpl    : Got 1 instances from neighboring DS node
+2025-05-08T22:28:15.513+03:00  INFO 1833564 --- [eureka-server] [       Thread-9] c.n.e.r.PeerAwareInstanceRegistryImpl    : Renew threshold is: 1
+2025-05-08T22:28:15.513+03:00  INFO 1833564 --- [eureka-server] [       Thread-9] c.n.e.r.PeerAwareInstanceRegistryImpl    : Changing status to UP
+2025-05-08T22:28:15.514+03:00  INFO 1833564 --- [eureka-server] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8761 (http) with context path '/'
+2025-05-08T22:28:15.515+03:00  INFO 1833564 --- [eureka-server] [       Thread-9] e.s.EurekaServerInitializerConfiguration : Started Eureka Server
+2025-05-08T22:28:15.515+03:00  INFO 1833564 --- [eureka-server] [           main] .s.c.n.e.s.EurekaAutoServiceRegistration : Updating port to 8761
+2025-05-08T22:28:15.534+03:00  INFO 1833564 --- [eureka-server] [           main] i.b.e.e.EurekaServerApplication          : Started EurekaServerApplication in 3.059 seconds (process running for 3.504)
+2025-05-08T22:28:39.674+03:00  INFO 1833564 --- [eureka-server] [nio-8761-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-05-08T22:28:39.674+03:00  INFO 1833564 --- [eureka-server] [nio-8761-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-05-08T22:28:39.675+03:00  INFO 1833564 --- [eureka-server] [nio-8761-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2025-05-08T22:28:39.864+03:00  INFO 1833564 --- [eureka-server] [nio-8761-exec-2] c.n.e.registry.AbstractInstanceRegistry  : Registered instance GATEWAY/10.22.167.145:gateway:8080 with status UP (replication=false)
+2025-05-08T22:28:40.478+03:00  INFO 1833564 --- [eureka-server] [nio-8761-exec-3] c.n.e.registry.AbstractInstanceRegistry  : Registered instance GATEWAY/10.22.167.145:gateway:8080 with status UP (replication=true)
+2025-05-08T22:28:51.638+03:00  INFO 1833564 --- [eureka-server] [nio-8761-exec-5] c.n.e.registry.AbstractInstanceRegistry  : Registered instance USER-SERVICE/10.22.167.145:user-service:8082 with status UP (replication=false)
+2025-05-08T22:28:52.151+03:00  INFO 1833564 --- [eureka-server] [nio-8761-exec-6] c.n.e.registry.AbstractInstanceRegistry  : Registered instance USER-SERVICE/10.22.167.145:user-service:8082 with status UP (replication=true)
+2025-05-08T22:29:01.394+03:00  INFO 1833564 --- [eureka-server] [nio-8761-exec-8] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ROLE-SERVICE/10.22.167.145:role-service:8083 with status UP (replication=false)
+2025-05-08T22:29:01.904+03:00  INFO 1833564 --- [eureka-server] [nio-8761-exec-9] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ROLE-SERVICE/10.22.167.145:role-service:8083 with status UP (replication=true)
+2025-05-08T22:29:15.514+03:00  INFO 1833564 --- [eureka-server] [a-EvictionTimer] c.n.e.registry.AbstractInstanceRegistry  : Running the evict task with compensationTime 0ms
+2025-05-08T22:30:15.514+03:00  INFO 1833564 --- [eureka-server] [a-EvictionTimer] c.n.e.registry.AbstractInstanceRegistry  : Running the evict task with compensationTime 0ms
+2025-05-08T22:31:15.515+03:00  INFO 1833564 --- [eureka-server] [a-EvictionTimer] c.n.e.registry.AbstractInstanceRegistry  : Running the evict task with compensationTime 1ms
+2025-05-08T22:32:15.515+03:00  INFO 1833564 --- [eureka-server] [a-EvictionTimer] c.n.e.registry.AbstractInstanceRegistry  : Running the evict task with compensationTime 0ms
+2025-05-09T09:20:59.050+03:00  INFO 1833564 --- [eureka-server] [a-EvictionTimer] c.n.e.registry.AbstractInstanceRegistry  : Running the evict task with compensationTime 0ms
+2025-05-09T09:20:59.050+03:00  INFO 1833564 --- [eureka-server] [a-EvictionTimer] c.n.e.registry.AbstractInstanceRegistry  : Evicting 1 items (expired=2, evictionLimit=1)
+2025-05-09T09:20:59.050+03:00  WARN 1833564 --- [eureka-server] [a-EvictionTimer] c.n.e.registry.AbstractInstanceRegistry  : DS: Registry: expired lease for ROLE-SERVICE/10.22.167.145:role-service:8083
+2025-05-09T09:20:59.051+03:00  INFO 1833564 --- [eureka-server] [a-EvictionTimer] c.n.e.registry.AbstractInstanceRegistry  : Cancelled instance ROLE-SERVICE/10.22.167.145:role-service:8083 (replication=false)
+2025-05-09T09:21:14.991+03:00  WARN 1833564 --- [eureka-server] [nio-8761-exec-3] c.n.e.registry.AbstractInstanceRegistry  : DS: Registry: lease doesn't exist, registering resource: ROLE-SERVICE - 10.22.167.145:role-service:8083
+2025-05-09T09:21:14.991+03:00  WARN 1833564 --- [eureka-server] [nio-8761-exec-3] c.n.eureka.resources.InstanceResource    : Not Found (Renew): ROLE-SERVICE - 10.22.167.145:role-service:8083
+2025-05-09T09:21:15.078+03:00  INFO 1833564 --- [eureka-server] [nio-8761-exec-8] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ROLE-SERVICE/10.22.167.145:role-service:8083 with status UP (replication=false)
+2025-05-09T09:21:15.594+03:00  INFO 1833564 --- [eureka-server] [nio-8761-exec-2] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ROLE-SERVICE/10.22.167.145:role-service:8083 with status UP (replication=true)
+2025-05-09T09:21:59.050+03:00  INFO 1833564 --- [eureka-server] [a-EvictionTimer] c.n.e.registry.AbstractInstanceRegistry  : Running the evict task with compensationTime 0ms
+2025-05-09T09:22:46.959+03:00  INFO 1833564 --- [eureka-server] [nio-8761-exec-3] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ROLE-SERVICE/10.22.167.145:role-service:8083 with status DOWN (replication=false)
+2025-05-09T09:22:47.474+03:00  INFO 1833564 --- [eureka-server] [nio-8761-exec-8] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ROLE-SERVICE/10.22.167.145:role-service:8083 with status DOWN (replication=true)
+2025-05-09T09:22:48.994+03:00  INFO 1833564 --- [eureka-server] [io-8761-exec-10] c.n.e.registry.AbstractInstanceRegistry  : Registered instance USER-SERVICE/10.22.167.145:user-service:8082 with status DOWN (replication=false)
+2025-05-09T09:22:49.504+03:00  INFO 1833564 --- [eureka-server] [nio-8761-exec-1] c.n.e.registry.AbstractInstanceRegistry  : Registered instance USER-SERVICE/10.22.167.145:user-service:8082 with status DOWN (replication=true)
+2025-05-09T09:22:51.037+03:00  INFO 1833564 --- [eureka-server] [nio-8761-exec-7] c.n.e.registry.AbstractInstanceRegistry  : Registered instance GATEWAY/10.22.167.145:gateway:8080 with status DOWN (replication=false)
+2025-05-09T09:22:51.548+03:00  INFO 1833564 --- [eureka-server] [nio-8761-exec-4] c.n.e.registry.AbstractInstanceRegistry  : Registered instance GATEWAY/10.22.167.145:gateway:8080 with status DOWN (replication=true)
+2025-05-09T09:22:53.057+03:00  INFO 1833564 --- [eureka-server] [ionShutdownHook] o.s.c.n.e.s.EurekaServiceRegistry        : Unregistering application EUREKA-SERVER with eureka with status DOWN
+2025-05-09T09:22:53.060+03:00  INFO 1833564 --- [eureka-server] [ionShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2025-05-09T09:22:53.062+03:00  INFO 1833564 --- [eureka-server] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+2025-05-09T09:22:53.064+03:00  INFO 1833564 --- [eureka-server] [ionShutdownHook] o.s.c.n.e.server.EurekaServerBootstrap   : Shutting down Eureka Server..
+2025-05-09T09:22:53.064+03:00  INFO 1833564 --- [eureka-server] [ionShutdownHook] c.n.eureka.DefaultEurekaServerContext    : Shutting down ...
+2025-05-09T09:22:53.067+03:00  INFO 1833564 --- [eureka-server] [ionShutdownHook] c.n.eureka.DefaultEurekaServerContext    : Shut down
+2025-05-09T09:22:53.067+03:00  INFO 1833564 --- [eureka-server] [ionShutdownHook] o.s.c.n.e.server.EurekaServerBootstrap   : Eureka Service is now shutdown...
+2025-05-09T09:22:53.068+03:00  INFO 1833564 --- [eureka-server] [ionShutdownHook] c.n.eureka.DefaultEurekaServerContext    : Shutting down ...
+2025-05-09T09:22:53.068+03:00  INFO 1833564 --- [eureka-server] [ionShutdownHook] c.n.eureka.DefaultEurekaServerContext    : Shut down
+2025-05-09T09:22:53.065+03:00 ERROR 1833564 --- [eureka-server] [t-Conn-Cleaner2] c.n.d.s.t.j.EurekaJersey3ClientImpl      : Cannot clean connections
+
+java.lang.IllegalStateException: Client instance has been closed.
+	at org.glassfish.jersey.internal.guava.Preconditions.checkState(Preconditions.java:169) ~[jersey-common-3.1.10.jar!/:na]
+	at org.glassfish.jersey.client.JerseyClient.checkNotClosed(JerseyClient.java:248) ~[jersey-client-3.1.10.jar!/:na]
+	at org.glassfish.jersey.client.JerseyClient.getConfiguration(JerseyClient.java:363) ~[jersey-client-3.1.10.jar!/:na]
+	at org.glassfish.jersey.client.JerseyClient.getConfiguration(JerseyClient.java:54) ~[jersey-client-3.1.10.jar!/:na]
+	at com.netflix.discovery.shared.transport.jersey3.EurekaJersey3ClientImpl$ConnectionCleanerTask.run(EurekaJersey3ClientImpl.java:338) ~[eureka-client-jersey3-2.0.4.jar!/:2.0.4]
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572) ~[na:na]
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317) ~[na:na]
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:304) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+
+2025-05-09T09:22:53.071+03:00  INFO 1833564 --- [eureka-server] [ionShutdownHook] com.netflix.discovery.DiscoveryClient    : Shutting down DiscoveryClient ...
+2025-05-09T09:22:53.071+03:00  INFO 1833564 --- [eureka-server] [ionShutdownHook] com.netflix.discovery.DiscoveryClient    : Completed shut down of DiscoveryClient

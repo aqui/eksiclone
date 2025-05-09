@@ -1,0 +1,5 @@
+in/batur/eksiclone/roleservice/RoleServiceApplication.class
+in/batur/eksiclone/roleservice/service/RoleServiceImpl.class
+in/batur/eksiclone/roleservice/exception/GlobalExceptionHandler.class
+in/batur/eksiclone/roleservice/controller/RoleController.class
+in/batur/eksiclone/roleservice/service/RoleService.class
