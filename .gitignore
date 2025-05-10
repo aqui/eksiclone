@@ -3,10 +3,10 @@
 *.class
 
 # Ignore JWT Keys
-*/keys/
-*/src/main/resources/keys/
-**/private.key
-**/public.key
+#*/keys/
+#*/src/main/resources/keys/
+#**/private.key
+#**/public.key
 
 # Log files
 *.log

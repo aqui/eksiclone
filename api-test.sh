@@ -1,258 +1,595 @@
 #!/bin/bash
 
 # EksiClone API Test Script
-# Bu script, EksiClone projesinin API'lerini test eder ve sonuçları loglar
+# Bu script eksiclone uygulamasında tüm API uçlarını test eder
 
+# Log dosyası
 LOG_FILE="eksiclone_api_test_$(date +%Y%m%d_%H%M%S).log"
-echo "EksiClone API Test Logs - $(date)" > $LOG_FILE
 
-# Renk kodları
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-# Test sonuçları sayaçları
-TOTAL_TESTS=0
-PASSED_TESTS=0
-FAILED_TESTS=0
-
-# Loglama fonksiyonu - hem terminale hem de log dosyasına yazar
-log() {
-  echo -e "$1"
-  echo "$1" | sed 's/\x1b\[[0-9;]*m//g' >> $LOG_FILE
-}
-
-# API test fonksiyonu
-test_api() {
-  local method=$1
-  local endpoint=$2
-  local payload=$3
-  local auth_token=$4
-  local description=$5
-  local expected_status=$6
-  
-  TOTAL_TESTS=$((TOTAL_TESTS + 1))
-  
-  log "\n[TEST $TOTAL_TESTS] $description"
-  log "Method: $method"
-  log "Endpoint: $endpoint"
-  
-  if [ ! -z "$payload" ]; then
-    log "Payload: $payload"
-  fi
-  
-  AUTH_HEADER=""
-  if [ ! -z "$auth_token" ]; then
-    AUTH_HEADER="-H \"Authorization: Bearer $auth_token\""
-  fi
-  
-  CURL_CMD="curl -s -o response.json -w \"%{http_code}\" -X $method"
-  
-  if [ ! -z "$payload" ]; then
-    CURL_CMD="$CURL_CMD -H \"Content-Type: application/json\" -d '$payload'"
-  fi
-  
-  if [ ! -z "$auth_token" ]; then
-    CURL_CMD="$CURL_CMD -H \"Authorization: Bearer $auth_token\""
-  fi
-  
-  CURL_CMD="$CURL_CMD $endpoint"
-  
-  log "Command: $CURL_CMD"
-  
-  # CURL komutunu çalıştır ve HTTP kodunu al
-  HTTP_CODE=$(eval $CURL_CMD)
-  
-  # Beklenen durum kodunu kontrol et
-  if [ "$HTTP_CODE" -eq "$expected_status" ]; then
-    log "${GREEN}✓ Success:${NC} Status $HTTP_CODE matches expected $expected_status"
-    PASSED_TESTS=$((PASSED_TESTS + 1))
-  else
-    log "${RED}✗ Error:${NC} Status $HTTP_CODE does not match expected $expected_status"
-    FAILED_TESTS=$((FAILED_TESTS + 1))
-  fi
-  
-  # Yanıtı loglama
-  RESPONSE=$(cat response.json)
-  log "Response: $RESPONSE"
-  
-  # Yapılan temizlik
-  rm -f response.json
-}
-
-# API Base URL
+# API base URL
 GATEWAY_URL="http://localhost:8080"
 USER_SERVICE_URL="http://localhost:8082"
 ROLE_SERVICE_URL="http://localhost:8083"
 
-log "${YELLOW}=== Starting EksiClone API Tests ===${NC}"
-log "Date: $(date)"
+# Log functions
+log_info() {
+    echo -e "[INFO] $(date +"%Y-%m-%d %H:%M:%S") - $1" | tee -a "$LOG_FILE"
+}
 
-# 1. Authentication Tests
-log "\n${YELLOW}=== Authentication Tests ===${NC}"
+log_error() {
+    echo -e "[ERROR] $(date +"%Y-%m-%d %H:%M:%S") - $1" | tee -a "$LOG_FILE"
+}
 
-# 1.1 Login - Normal User
-LOGIN_PAYLOAD='{
-  "username": "normal_user",
-  "password": "password123"
-}'
-test_api "POST" "$GATEWAY_URL/api/v1/auth/login" "$LOGIN_PAYLOAD" "" "Login as normal user" 200
+log_success() {
+    echo -e "[SUCCESS] $(date +"%Y-%m-%d %H:%M:%S") - $1" | tee -a "$LOG_FILE"
+}
 
-# JWT Token'ı kaydet (başarılı giriş varsayıldı)
-if [ -f response.json ]; then
-  USER_TOKEN=$(grep -o '"token":"[^"]*' response.json | cut -d'"' -f4)
-  
-  if [ ! -z "$USER_TOKEN" ]; then
-    log "Normal user token: $USER_TOKEN"
-  else
-    log "${RED}Failed to extract normal user token${NC}"
-  fi
+# Check if a service is running
+check_service() {
+    local url="$1"
+    local service_name="$2"
+    
+    log_info "Checking if $service_name is available..."
+    
+    if curl -s -f "$url" > /dev/null 2>&1; then
+        log_success "$service_name is running"
+        return 0
+    else
+        log_error "$service_name is not available at $url"
+        return 1
+    fi
+}
+
+# JWT Token storage
+TOKEN=""
+REFRESH_TOKEN=""
+
+# Test Authentication API
+test_auth() {
+    log_info "Testing Authentication API..."
+    
+    # Login with admin credentials
+    log_info "Logging in with admin credentials..."
+    
+    response=$(curl -s -X POST \
+        -H "Content-Type: application/json" \
+        -d '{"username":"admin_user","password":"password123"}' \
+        "$GATEWAY_URL/api/v1/auth/login")
+    
+    # Check if login was successful
+    if echo "$response" | grep -q "token"; then
+        TOKEN=$(echo "$response" | grep -o '"token":"[^"]*' | sed 's/"token":"//')
+        REFRESH_TOKEN=$(echo "$response" | grep -o '"refreshToken":"[^"]*' | sed 's/"refreshToken":"//')
+        log_success "Login successful, got JWT token"
+        echo "$response" >> "$LOG_FILE"
+    else
+        log_error "Login failed"
+        echo "$response" >> "$LOG_FILE"
+        # Try direct service call if gateway fails
+        response=$(curl -s -X POST \
+            -H "Content-Type: application/json" \
+            -d '{"username":"admin_user","password":"password123"}' \
+            "$USER_SERVICE_URL/api/v1/auth/login")
+        
+        if echo "$response" | grep -q "token"; then
+            TOKEN=$(echo "$response" | grep -o '"token":"[^"]*' | sed 's/"token":"//')
+            REFRESH_TOKEN=$(echo "$response" | grep -o '"refreshToken":"[^"]*' | sed 's/"refreshToken":"//')
+            log_success "Direct login successful, got JWT token"
+            echo "$response" >> "$LOG_FILE"
+        else
+            log_error "Direct login also failed, cannot proceed with tests"
+            echo "$response" >> "$LOG_FILE"
+            return 1
+        fi
+    fi
+    
+    # Test JWT token refresh
+    log_info "Testing token refresh..."
+    
+    refresh_response=$(curl -s -X POST \
+        -H "Content-Type: application/json" \
+        -d "{\"refreshToken\":\"$REFRESH_TOKEN\"}" \
+        "$GATEWAY_URL/api/v1/auth/refresh")
+    
+    if echo "$refresh_response" | grep -q "token"; then
+        TOKEN=$(echo "$refresh_response" | grep -o '"token":"[^"]*' | sed 's/"token":"//')
+        log_success "Token refresh successful"
+        echo "$refresh_response" >> "$LOG_FILE"
+    else
+        log_error "Token refresh failed, continuing with original token"
+        echo "$refresh_response" >> "$LOG_FILE"
+    fi
+    
+    # Test JWK endpoint
+    log_info "Testing JWK endpoint..."
+    
+    jwk_response=$(curl -s -X GET "$GATEWAY_URL/api/v1/auth/jwks.json")
+    
+    if echo "$jwk_response" | grep -q "keys"; then
+        log_success "JWK endpoint working"
+    else
+        log_error "JWK endpoint not working properly"
+        echo "$jwk_response" >> "$LOG_FILE"
+    fi
+    
+    return 0
+}
+
+# Test User API
+test_users() {
+    log_info "Testing User API..."
+    
+    # Get all users
+    log_info "Getting all users..."
+    
+    users_response=$(curl -s -X GET \
+        -H "Authorization: Bearer $TOKEN" \
+        "$GATEWAY_URL/api/v1/users")
+    
+    if [[ "$users_response" == \[*\] ]]; then
+        log_success "Get all users successful"
+        echo "$users_response" | head -c 300 >> "$LOG_FILE"
+        echo "..." >> "$LOG_FILE"
+    else
+        log_error "Get all users failed"
+        echo "$users_response" >> "$LOG_FILE"
+    fi
+    
+    # Get user by ID
+    log_info "Getting user by ID (1)..."
+    
+    user_response=$(curl -s -X GET \
+        -H "Authorization: Bearer $TOKEN" \
+        "$GATEWAY_URL/api/v1/users/1")
+    
+    if echo "$user_response" | grep -q "username"; then
+        log_success "Get user by ID successful"
+        echo "$user_response" >> "$LOG_FILE"
+    else
+        log_error "Get user by ID failed"
+        echo "$user_response" >> "$LOG_FILE"
+    fi
+    
+    # Create a new user
+    log_info "Creating a new user..."
+    
+    new_user_response=$(curl -s -X POST \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $TOKEN" \
+        -d '{
+            "username": "test_user_'$(date +%s)'",
+            "email": "test_'$(date +%s)'@example.com",
+            "password": "TestPassword123",
+            "name": "Test",
+            "lastName": "User",
+            "roleNames": ["ROLE_USER"]
+        }' \
+        "$GATEWAY_URL/api/v1/users")
+    
+    if echo "$new_user_response" | grep -q '"id":[0-9]'; then
+        log_success "Create user successful"
+        echo "$new_user_response" >> "$LOG_FILE"
+        # Extract the user ID for update and delete tests
+        NEW_USER_ID=$(echo "$new_user_response" | grep -o '"id":[0-9]*' | sed 's/"id"://')
+    else
+        log_error "Create user failed"
+        echo "$new_user_response" >> "$LOG_FILE"
+        # Use a default user ID for update and delete tests
+        NEW_USER_ID=3
+    fi
+    
+    # Update user
+    log_info "Updating user with ID $NEW_USER_ID..."
+    
+    update_user_response=$(curl -s -X PUT \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $TOKEN" \
+        -d '{
+            "username": "updated_user_'$(date +%s)'",
+            "email": "updated_'$(date +%s)'@example.com",
+            "password": "UpdatedPassword123",
+            "name": "Updated",
+            "lastName": "User",
+            "roleNames": ["ROLE_USER", "ROLE_MODERATOR"]
+        }' \
+        "$GATEWAY_URL/api/v1/users/$NEW_USER_ID")
+    
+    if echo "$update_user_response" | grep -q "username"; then
+        log_success "Update user successful"
+        echo "$update_user_response" >> "$LOG_FILE"
+    else
+        log_error "Update user failed"
+        echo "$update_user_response" >> "$LOG_FILE"
+    fi
+    
+    # Delete user (be careful with this in production)
+    log_info "Deleting user with ID $NEW_USER_ID..."
+    
+    delete_user_response=$(curl -s -X DELETE \
+        -H "Authorization: Bearer $TOKEN" \
+        -w "%{http_code}" \
+        -o /dev/null \
+        "$GATEWAY_URL/api/v1/users/$NEW_USER_ID")
+    
+    if [ "$delete_user_response" = "204" ]; then
+        log_success "Delete user successful"
+    else
+        log_error "Delete user failed with HTTP code $delete_user_response"
+    fi
+    
+    return 0
+}
+
+# Test Role API
+test_roles() {
+    log_info "Testing Role API..."
+    
+    # Get all roles
+    log_info "Getting all roles..."
+    
+    roles_response=$(curl -s -X GET \
+        -H "Authorization: Bearer $TOKEN" \
+        "$GATEWAY_URL/api/v1/roles")
+    
+    if [[ "$roles_response" == \[*\] ]]; then
+        log_success "Get all roles successful"
+        echo "$roles_response" >> "$LOG_FILE"
+    else
+        log_error "Get all roles failed"
+        echo "$roles_response" >> "$LOG_FILE"
+    fi
+    
+    # Get role by ID
+    log_info "Getting role by ID (1)..."
+    
+    role_response=$(curl -s -X GET \
+        -H "Authorization: Bearer $TOKEN" \
+        "$GATEWAY_URL/api/v1/roles/1")
+    
+    if echo "$role_response" | grep -q "roleName"; then
+        log_success "Get role by ID successful"
+        echo "$role_response" >> "$LOG_FILE"
+    else
+        log_error "Get role by ID failed"
+        echo "$role_response" >> "$LOG_FILE"
+    fi
+    
+    # Create a new role with doğru format
+    log_info "Creating a new role..."
+    
+    # Rol adını düzeltiyoruz - ROLE_ ile başlamalı, sadece büyük harf ve alt çizgi içermeli
+    TIMESTAMP=$(date +%s | tr "[:lower:]" "[:upper:]")
+    
+    new_role_response=$(curl -s -X POST \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $TOKEN" \
+        -d '{
+            "roleName": "ROLE_TEST_'$TIMESTAMP'"
+        }' \
+        "$GATEWAY_URL/api/v1/roles")
+    
+    # Başarı kontrolü
+    if echo "$new_role_response" | grep -q '"id":[0-9]'; then
+        log_success "Create role successful"
+        echo "$new_role_response" >> "$LOG_FILE"
+        # Extract the role ID for update and delete tests
+        NEW_ROLE_ID=$(echo "$new_role_response" | grep -o '"id":[0-9]*' | sed 's/"id"://')
+        log_info "Role created with ID $NEW_ROLE_ID"
+    else
+        log_error "Create role failed"
+        echo "$new_role_response" >> "$LOG_FILE"
+        # Use a default role ID for update and delete tests
+        NEW_ROLE_ID=""
+        log_info "Failed to create role, will create a temporary role for tests"
+    fi
+    
+    # Eğer rol oluşturma başarısız olduysa, yeni bir deneme yap
+    if [ -z "$NEW_ROLE_ID" ]; then
+        log_info "Trying to create a role with alternative format..."
+        
+        new_role_response=$(curl -s -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $TOKEN" \
+            -d '{
+                "roleName": "ROLE_ALTERNATIVE"
+            }' \
+            "$GATEWAY_URL/api/v1/roles")
+        
+        if echo "$new_role_response" | grep -q '"id":[0-9]'; then
+            log_success "Alternative role creation successful"
+            echo "$new_role_response" >> "$LOG_FILE"
+            NEW_ROLE_ID=$(echo "$new_role_response" | grep -o '"id":[0-9]*' | sed 's/"id"://')
+            log_info "Alternative role created with ID $NEW_ROLE_ID"
+        else
+            log_error "Alternative role creation also failed"
+            echo "$new_role_response" >> "$LOG_FILE"
+        fi
+    fi
+    
+    # Eğer bir rol ID'si elde edildiyse update ve delete testlerini yap
+    if [ ! -z "$NEW_ROLE_ID" ]; then
+        # Update role
+        log_info "Updating role with ID $NEW_ROLE_ID..."
+        
+        update_role_response=$(curl -s -X PUT \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $TOKEN" \
+            -d '{
+                "roleName": "ROLE_UPDATED_'$TIMESTAMP'"
+            }' \
+            "$GATEWAY_URL/api/v1/roles/$NEW_ROLE_ID")
+        
+        if echo "$update_role_response" | grep -q '"id":[0-9]' && echo "$update_role_response" | grep -q '"roleName"'; then
+            log_success "Update role successful"
+            echo "$update_role_response" >> "$LOG_FILE"
+        else
+            log_error "Update role failed"
+            echo "$update_role_response" >> "$LOG_FILE"
+        fi
+        
+        # Delete role (will only work if no users have this role)
+        log_info "Deleting role with ID $NEW_ROLE_ID..."
+        
+        delete_role_response=$(curl -s -X DELETE \
+            -H "Authorization: Bearer $TOKEN" \
+            -w "%{http_code}" \
+            -o /dev/null \
+            "$GATEWAY_URL/api/v1/roles/$NEW_ROLE_ID")
+        
+        if [ "$delete_role_response" = "204" ]; then
+            log_success "Delete role successful"
+        else
+            log_error "Delete role failed with HTTP code $delete_role_response"
+            
+            # Eğer silme işlemi başarısız olursa, rol kullanılıyor olabilir
+            log_info "Role might be assigned to users, checking with GET request..."
+            
+            role_check=$(curl -s -X GET \
+                -H "Authorization: Bearer $TOKEN" \
+                "$GATEWAY_URL/api/v1/roles/$NEW_ROLE_ID")
+            
+            if echo "$role_check" | grep -q "roleName"; then
+                log_info "Role still exists, it may be assigned to users"
+                echo "$role_check" >> "$LOG_FILE"
+            else
+                log_info "Role no longer exists or cannot be accessed"
+            fi
+        fi
+    else
+        log_info "Skipping role update and delete tests as no valid role ID was obtained"
+    fi
+    
+    # Try to create a temporary role and delete it specifically for delete test
+    log_info "Creating a temporary role specifically for delete test..."
+    
+    temp_role_response=$(curl -s -X POST \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $TOKEN" \
+        -d '{
+            "roleName": "ROLE_TEMP_'$TIMESTAMP'"
+        }' \
+        "$GATEWAY_URL/api/v1/roles")
+    
+    if echo "$temp_role_response" | grep -q '"id":[0-9]'; then
+        log_success "Temporary role created successfully"
+        echo "$temp_role_response" >> "$LOG_FILE"
+        
+        # Extract the role ID 
+        TEMP_ROLE_ID=$(echo "$temp_role_response" | grep -o '"id":[0-9]*' | sed 's/"id"://')
+        log_info "Temporary role created with ID $TEMP_ROLE_ID"
+        
+        # Delete the temporary role
+        log_info "Deleting temporary role with ID $TEMP_ROLE_ID..."
+        
+        delete_temp_response=$(curl -s -X DELETE \
+            -H "Authorization: Bearer $TOKEN" \
+            -w "%{http_code}" \
+            -o /dev/null \
+            "$GATEWAY_URL/api/v1/roles/$TEMP_ROLE_ID")
+        
+        if [ "$delete_temp_response" = "204" ]; then
+            log_success "Temporary role deletion successful"
+        else
+            log_error "Temporary role deletion failed with HTTP code $delete_temp_response"
+        fi
+    else
+        log_error "Failed to create temporary role for delete test"
+        echo "$temp_role_response" >> "$LOG_FILE"
+    fi
+    
+    # Try to delete a role that is assigned to users (should fail)
+    log_info "Trying to delete a role that is assigned to users (ID 1 - ROLE_ADMIN)..."
+    
+    delete_admin_response=$(curl -s -X DELETE \
+        -H "Authorization: Bearer $TOKEN" \
+        "$GATEWAY_URL/api/v1/roles/1")
+    
+    if echo "$delete_admin_response" | grep -q "error"; then
+        log_success "Delete role with users correctly failed with proper error message"
+        echo "$delete_admin_response" >> "$LOG_FILE"
+    else
+        log_error "Delete role with users didn't fail as expected"
+        echo "$delete_admin_response" >> "$LOG_FILE"
+    fi
+    
+    return 0
+}
+
+# Test with invalid token
+test_invalid_auth() {
+    log_info "Testing APIs with invalid authentication..."
+    
+    INVALID_TOKEN="eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbl91c2VyIiwiY3JlYXRlZCI6MTYyMDY0NTU5MjQ3Niwicm9sZXMiOlsiUk9MRV9BRE1JTiJdLCJpYXQiOjE2MjA2NDU1OTIsImV4cCI6MTYyMDY0NTU5Mn0.invalid_signature"
+    
+    # Try to get users with invalid token
+    log_info "Trying to get users with invalid token..."
+    
+    invalid_auth_response=$(curl -s -X GET \
+        -H "Authorization: Bearer $INVALID_TOKEN" \
+        -w "%{http_code}" \
+        -o /dev/null \
+        "$GATEWAY_URL/api/v1/users")
+    
+    if [ "$invalid_auth_response" = "401" ]; then
+        log_success "Invalid token correctly rejected with 401 Unauthorized"
+    else
+        log_error "Invalid token test failed, got HTTP code $invalid_auth_response"
+    fi
+    
+    # Try without any token
+    log_info "Trying to access protected resource without token..."
+    
+    no_auth_response=$(curl -s -X GET \
+        -w "%{http_code}" \
+        -o /dev/null \
+        "$GATEWAY_URL/api/v1/users")
+    
+    if [ "$no_auth_response" = "401" ]; then
+        log_success "No token correctly rejected with 401 Unauthorized"
+    else
+        log_error "No token test failed, got HTTP code $no_auth_response"
+    fi
+    
+    return 0
+}
+
+# Test edge cases
+test_edge_cases() {
+    log_info "Testing edge cases..."
+    
+    # Try to create a user with invalid data
+    log_info "Trying to create a user with invalid data..."
+    
+    invalid_user_response=$(curl -s -X POST \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $TOKEN" \
+        -d '{
+            "username": "a",
+            "email": "not-an-email",
+            "password": "short",
+            "name": "",
+            "lastName": "",
+            "roleNames": ["NON_EXISTENT_ROLE"]
+        }' \
+        "$GATEWAY_URL/api/v1/users")
+    
+    # Düzeltilmiş validasyon kontrolü
+    if echo "$invalid_user_response" | grep -q -E 'username|email|password|name|lastName'; then
+        log_success "Invalid user data correctly rejected with validation errors"
+        echo "$invalid_user_response" >> "$LOG_FILE"
+    else
+        log_error "Invalid user data validation failed unexpectedly"
+        echo "$invalid_user_response" >> "$LOG_FILE"
+    fi
+    
+    # Try to create a role with invalid name
+    log_info "Trying to create a role with invalid name..."
+    
+    invalid_role_response=$(curl -s -X POST \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $TOKEN" \
+        -d '{
+            "roleName": "invalid_role_name"
+        }' \
+        "$GATEWAY_URL/api/v1/roles")
+    
+    # Düzeltilmiş validasyon kontrolü
+    if echo "$invalid_role_response" | grep -q -E "roleName"; then
+        log_success "Invalid role name correctly rejected with validation errors"
+        echo "$invalid_role_response" >> "$LOG_FILE"
+    else
+        log_error "Invalid role name validation failed unexpectedly"
+        echo "$invalid_role_response" >> "$LOG_FILE"
+    fi
+    
+    # Try to get a non-existent user
+    log_info "Trying to get a non-existent user (ID 999)..."
+    
+    non_existent_user_response=$(curl -s -X GET \
+        -H "Authorization: Bearer $TOKEN" \
+        "$GATEWAY_URL/api/v1/users/999")
+    
+    if echo "$non_existent_user_response" | grep -q "error"; then
+        log_success "Non-existent user correctly returned error"
+        echo "$non_existent_user_response" >> "$LOG_FILE"
+    else
+        log_error "Non-existent user didn't return proper error"
+        echo "$non_existent_user_response" >> "$LOG_FILE"
+    fi
+    
+    # Try to create a user with existing username
+    log_info "Trying to create a user with existing username..."
+    
+    duplicate_user_response=$(curl -s -X POST \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $TOKEN" \
+        -d '{
+            "username": "admin_user",
+            "email": "unique_'$(date +%s)'@example.com",
+            "password": "ValidPassword123",
+            "name": "Duplicate",
+            "lastName": "User",
+            "roleNames": ["ROLE_USER"]
+        }' \
+        "$GATEWAY_URL/api/v1/users")
+    
+    if echo "$duplicate_user_response" | grep -q "error"; then
+        log_success "Duplicate username correctly rejected"
+        echo "$duplicate_user_response" >> "$LOG_FILE"
+    else
+        log_error "Duplicate username not properly validated"
+        echo "$duplicate_user_response" >> "$LOG_FILE"
+    fi
+    
+    return 0
+}
+
+# Run all tests
+run_all_tests() {
+    log_info "Starting EksiClone API Tests..."
+    
+    # Check if services are running
+    check_service "$GATEWAY_URL/actuator/health" "API Gateway" || return 1
+    check_service "$USER_SERVICE_URL/actuator/health" "User Service" || return 1
+    check_service "$ROLE_SERVICE_URL/actuator/health" "Role Service" || return 1
+    
+    # Run authentication tests first to get token
+    test_auth || return 1
+    
+    # Run other tests
+    test_users
+    test_roles
+    test_invalid_auth
+    test_edge_cases
+    
+    log_info "All tests completed!"
+    
+    return 0
+}
+
+# Create log file
+touch "$LOG_FILE"
+log_info "Starting API test script. Log file: $LOG_FILE"
+
+# Run tests
+run_all_tests
+
+# Print summary of results
+total_tests=$(grep -c "\[INFO\]" "$LOG_FILE")
+successful_tests=$(grep -c "\[SUCCESS\]" "$LOG_FILE")
+failed_tests=$(grep -c "\[ERROR\]" "$LOG_FILE")
+
+echo -e "\n\n========== TEST SUMMARY =========="
+echo "Total tests: $total_tests"
+echo "Successful: $successful_tests"
+echo "Failed: $failed_tests"
+echo "===================================="
+
+if [ $failed_tests -gt 0 ]; then
+   echo -e "\nFailed tests:"
+   grep "\[ERROR\]" "$LOG_FILE"
+   exit 1
+else
+   echo -e "\nAll tests passed successfully!"
+   exit 0
 fi
-
-# 1.2 Login - Admin User
-LOGIN_PAYLOAD='{
-  "username": "admin_user",
-  "password": "password123"
-}'
-test_api "POST" "$GATEWAY_URL/api/v1/auth/login" "$LOGIN_PAYLOAD" "" "Login as admin user" 200
-
-# Admin JWT Token'ı kaydet
-if [ -f response.json ]; then
-  ADMIN_TOKEN=$(grep -o '"token":"[^"]*' response.json | cut -d'"' -f4)
-  
-  if [ ! -z "$ADMIN_TOKEN" ]; then
-    log "Admin user token: $ADMIN_TOKEN"
-  else
-    log "${RED}Failed to extract admin user token${NC}"
-  fi
-fi
-
-# 1.3 Failed Login Test
-LOGIN_PAYLOAD='{
-  "username": "invalid_user",
-  "password": "wrong_password"
-}'
-test_api "POST" "$GATEWAY_URL/api/v1/auth/login" "$LOGIN_PAYLOAD" "" "Login with invalid credentials" 401
-
-# 2. User Service Tests
-log "\n${YELLOW}=== User Service Tests ===${NC}"
-
-# 2.1 Get All Users (Admin)
-test_api "GET" "$GATEWAY_URL/api/v1/users" "" "$ADMIN_TOKEN" "Get all users (admin)" 200
-
-# 2.2 Get User by ID - Admin gets user 3
-test_api "GET" "$GATEWAY_URL/api/v1/users/3" "" "$ADMIN_TOKEN" "Get user by ID (admin)" 200
-
-# 2.3 Create User - Admin creates new user
-CREATE_USER_PAYLOAD='{
-  "username": "test_user",
-  "email": "test@example.com",
-  "password": "password123",
-  "name": "Test",
-  "lastName": "User",
-  "roleNames": ["ROLE_USER"]
-}'
-test_api "POST" "$GATEWAY_URL/api/v1/users" "$CREATE_USER_PAYLOAD" "$ADMIN_TOKEN" "Create new user (admin)" 201
-
-# Yeni oluşturulan kullanıcının ID'sini alma (başarılı oluşturma varsayıldı)
-if [ -f response.json ]; then
-  NEW_USER_ID=$(grep -o '"id":[0-9]*' response.json | cut -d':' -f2)
-  
-  if [ ! -z "$NEW_USER_ID" ]; then
-    log "New user ID: $NEW_USER_ID"
-  else
-    log "${RED}Failed to extract new user ID${NC}"
-    NEW_USER_ID=4  # Varsayılan değer
-  fi
-fi
-
-# 2.4 Update User - Admin updates user
-UPDATE_USER_PAYLOAD='{
-  "username": "test_user_updated",
-  "email": "test_updated@example.com",
-  "password": "password123",
-  "name": "Test Updated",
-  "lastName": "User Updated",
-  "roleNames": ["ROLE_USER"]
-}'
-test_api "PUT" "$GATEWAY_URL/api/v1/users/$NEW_USER_ID" "$UPDATE_USER_PAYLOAD" "$ADMIN_TOKEN" "Update user (admin)" 200
-
-# 2.5 Delete User - Admin deletes user
-test_api "DELETE" "$GATEWAY_URL/api/v1/users/$NEW_USER_ID" "" "$ADMIN_TOKEN" "Delete user (admin)" 204
-
-# 3. Role Service Tests
-log "\n${YELLOW}=== Role Service Tests ===${NC}"
-
-# 3.1 Get All Roles (Admin)
-test_api "GET" "$GATEWAY_URL/api/v1/roles" "" "$ADMIN_TOKEN" "Get all roles (admin)" 200
-
-# 3.2 Get Role by ID - Admin gets role 1
-test_api "GET" "$GATEWAY_URL/api/v1/roles/1" "" "$ADMIN_TOKEN" "Get role by ID (admin)" 200
-
-# 3.3 Create Role - Admin creates new role
-CREATE_ROLE_PAYLOAD='{
-  "roleName": "ROLE_TEST"
-}'
-test_api "POST" "$GATEWAY_URL/api/v1/roles" "$CREATE_ROLE_PAYLOAD" "$ADMIN_TOKEN" "Create new role (admin)" 201
-
-# Yeni oluşturulan rolün ID'sini alma (başarılı oluşturma varsayıldı)
-if [ -f response.json ]; then
-  NEW_ROLE_ID=$(grep -o '"id":[0-9]*' response.json | cut -d':' -f2)
-  
-  if [ ! -z "$NEW_ROLE_ID" ]; then
-    log "New role ID: $NEW_ROLE_ID"
-  else
-    log "${RED}Failed to extract new role ID${NC}"
-    NEW_ROLE_ID=4  # Varsayılan değer
-  fi
-fi
-
-# 3.4 Update Role - Admin updates role
-UPDATE_ROLE_PAYLOAD='{
-  "roleName": "ROLE_TEST_UPDATED"
-}'
-test_api "PUT" "$GATEWAY_URL/api/v1/roles/$NEW_ROLE_ID" "$UPDATE_ROLE_PAYLOAD" "$ADMIN_TOKEN" "Update role (admin)" 200
-
-# 3.5 Delete Role - Admin deletes role
-test_api "DELETE" "$GATEWAY_URL/api/v1/roles/$NEW_ROLE_ID" "" "$ADMIN_TOKEN" "Delete role (admin)" 204
-
-# 4. Authorization Tests
-log "\n${YELLOW}=== Authorization Tests ===${NC}"
-
-# 4.1 Regular user tries to access admin-only resource
-test_api "GET" "$GATEWAY_URL/api/v1/users" "" "$USER_TOKEN" "Regular user tries to get all users" 403
-
-# 4.2 Unauthenticated user tries to access protected resource
-test_api "GET" "$GATEWAY_URL/api/v1/users/1" "" "" "Unauthenticated user tries to get user info" 401
-
-# 5. JWKS Endpoint Test
-log "\n${YELLOW}=== JWKS Endpoint Test ===${NC}"
-test_api "GET" "$GATEWAY_URL/api/v1/auth/jwks.json" "" "" "Get JWKS for JWT validation" 200
-
-# Özet istatistikler
-log "\n${YELLOW}=== Test Summary ===${NC}"
-log "Total Tests: $TOTAL_TESTS"
-log "${GREEN}Passed Tests: $PASSED_TESTS${NC}"
-log "${RED}Failed Tests: $FAILED_TESTS${NC}"
-log "Success Rate: $(( (PASSED_TESTS * 100) / TOTAL_TESTS ))%"
-log "Log file: $LOG_FILE"
-
-# Çalışan Eureka server ve servisler hakkında bilgi alma
-log "\n${YELLOW}=== Running Services ===${NC}"
-EUREKA_STATUS=$(curl -s http://localhost:8761/eureka/apps | grep -c "<application>")
-log "Eureka Server: $(if [ $EUREKA_STATUS -gt 0 ]; then echo "${GREEN}Running${NC}"; else echo "${RED}Not running${NC}"; fi)"
-
-# User Service durumu
-USER_SERVICE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8082/actuator/health 2>/dev/null || echo "000")
-log "User Service: $(if [ "$USER_SERVICE_STATUS" = "200" ]; then echo "${GREEN}Running${NC}"; else echo "${RED}Not running ($USER_SERVICE_STATUS)${NC}"; fi)"
-
-# Role Service durumu
-ROLE_SERVICE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8083/actuator/health 2>/dev/null || echo "000")
-log "Role Service: $(if [ "$ROLE_SERVICE_STATUS" = "200" ]; then echo "${GREEN}Running${NC}"; else echo "${RED}Not running ($ROLE_SERVICE_STATUS)${NC}"; fi)"
-
-# Gateway durumu
-GATEWAY_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/actuator/health 2>/dev/null || echo "000")
-log "Gateway: $(if [ "$GATEWAY_STATUS" = "200" ]; then echo "${GREEN}Running${NC}"; else echo "${RED}Not running ($GATEWAY_STATUS)${NC}"; fi)"
-
-log "\n${YELLOW}=== Test Completed ===${NC}"

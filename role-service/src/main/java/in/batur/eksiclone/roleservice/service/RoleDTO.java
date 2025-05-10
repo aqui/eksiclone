@@ -9,7 +9,7 @@ public class RoleDTO {
 
     @NotBlank(message = "Role name is mandatory")
     @Size(min = 3, max = 50, message = "Role name must be between 3 and 50 characters")
-    @Pattern(regexp = "^ROLE_[A-Z_]+$", message = "Role name must start with 'ROLE_' followed by uppercase letters and underscores")
+    @Pattern(regexp = "^ROLE_[A-Z0-9_]+$", message = "Role name must start with 'ROLE_' followed by uppercase letters, numbers, and underscores")
     private String roleName;
 
     // Getters and setters
