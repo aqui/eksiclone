@@ -35,7 +35,16 @@ public class ReactiveJwtAuthenticationConverter implements Converter<Jwt, Collec
                 
                 authorities = roles.stream()
                         .filter(role -> role != null && !role.isBlank())
-                        .map(SimpleGrantedAuthority::new)
+                        .map(role -> {
+                            // Spring Security "hasRole" otomatik olarak "ROLE_" öneki ekler,
+                            // eğer role zaten "ROLE_" ile başlıyorsa SimpleGrantedAuthority'de
+                            // olduğu gibi kullan, yoksa "ROLE_" ekleyerek kullan
+                            if (role.startsWith("ROLE_")) {
+                                return new SimpleGrantedAuthority(role);
+                            } else {
+                                return new SimpleGrantedAuthority("ROLE_" + role);
+                            }
+                        })
                         .collect(Collectors.toList());
                 
                 // Rol sayısını kontrol et

@@ -39,8 +39,12 @@ public class JwtService {
         Map<String, Object> claims = new HashMap<>();
         claims.put("sub", userDetails.getUsername());
         claims.put("created", new Date());
+        
+        // Rol isimlerinden "ROLE_" önekini çıkaralım çünkü Spring Security zaten ekleyecek
         claims.put("roles", userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
+                // .map(authority -> authority.startsWith("ROLE_") ? authority.substring(5) : authority) 
+                // Bu satırı şimdilik yoruma alıyorum, çünkü backend tarafında değişiklik gerektiriyor
                 .collect(Collectors.toList()));
 
         return Jwts.builder()
@@ -82,19 +86,19 @@ public class JwtService {
                 .parseClaimsJws(token);
             return true;
         } catch (SignatureException e) {
-            logger.error("Geçersiz JWT imzası: {}", e.getMessage());
+            logger.error("Invalid JWT signature: {}", e.getMessage());
             throw e;
         } catch (MalformedJwtException e) {
-            logger.error("Geçersiz JWT token: {}", e.getMessage());
+            logger.error("Invalid JWT token: {}", e.getMessage());
             throw e;
         } catch (ExpiredJwtException e) {
-            logger.error("JWT token süresi doldu: {}", e.getMessage());
+            logger.error("JWT token expired: {}", e.getMessage());
             throw e;
         } catch (UnsupportedJwtException e) {
-            logger.error("Desteklenmeyen JWT token: {}", e.getMessage());
+            logger.error("Unsupported JWT token: {}", e.getMessage());
             throw e;
         } catch (IllegalArgumentException e) {
-            logger.error("JWT token boş veya null: {}", e.getMessage());
+            logger.error("JWT token is empty or null: {}", e.getMessage());
             throw e;
         }
     }

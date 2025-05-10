@@ -1,6 +1,14 @@
 package in.batur.eksiclone.gateway.config;
 
-// ConfigurationProperties annotation'ını kaldırıp
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
+
+/**
+ * JWT health check özelliklerini tutan sınıf.
+ * Configuration properties ile bean olarak tanımlandı.
+ */
+@Configuration
+@ConfigurationProperties(prefix = "management.health.jwt")
 public class JwtHealthProperties {
     private boolean enabled = true;
     

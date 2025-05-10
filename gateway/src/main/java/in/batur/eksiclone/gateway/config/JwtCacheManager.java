@@ -1,5 +1,7 @@
 package in.batur.eksiclone.gateway.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -15,9 +17,9 @@ import java.util.concurrent.TimeUnit;
  * Yapılandırma özelliklerini kullanarak token'ların önbellekte ne kadar süre 
  * tutulacağını ve ne zaman yenileneceğini belirler.
  */
-// @Component annotation'ı kaldırıldı, çünkü bean olarak JwtCacheConfig'de tanımlanıyor
 public class JwtCacheManager {
     
+    private static final Logger logger = LoggerFactory.getLogger(JwtCacheManager.class);
     private final WebClient webClient;
     private final GatewayJwtProperties jwtProperties;
     private final ConcurrentHashMap<String, CachedToken> tokenCache = new ConcurrentHashMap<>();
@@ -51,8 +53,8 @@ public class JwtCacheManager {
         // Periyodik önbellek temizleme işlemi başlat
         scheduler.scheduleAtFixedRate(this::cleanExpiredTokens, refreshMillis, refreshMillis, TimeUnit.MILLISECONDS);
         
-        System.out.println("JWT Cache TTL: " + parseDuration(jwtProperties.getTtl()));
-        System.out.println("JWT Cache Refresh: " + parseDuration(jwtProperties.getRefresh()));
+        logger.info("JWT Cache TTL: {}", parseDuration(jwtProperties.getTtl()));
+        logger.info("JWT Cache Refresh: {}", parseDuration(jwtProperties.getRefresh()));
     }
     
     /**
@@ -130,10 +132,9 @@ public class JwtCacheManager {
                     tokenCache.put(subject, new CachedToken(token, ttl.toMillis()));
                 })
                 .onErrorResume(e -> {
-                    // Hata durumunda yedek token oluştur (gerçek uygulama için değiştirilmeli)
-                    String fallbackToken = "sample-jwt-token-for-" + subject;
-                    tokenCache.put(subject, new CachedToken(fallbackToken, ttl.toMillis()));
-                    return Mono.just(fallbackToken);
+                    logger.error("Error fetching JWT token for {}: {}", subject, e.getMessage());
+                    // Eğer token servisine erişilemiyorsa, boş Mono dön
+                    return Mono.empty();
                 });
     }
     

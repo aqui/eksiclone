@@ -1,9 +1,11 @@
 package in.batur.eksiclone.security.util;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.nio.file.Files;
 import java.security.KeyFactory;
 import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.interfaces.RSAPrivateKey;
@@ -34,8 +36,8 @@ public class KeyPairManager {
         try {
             File keyStoreDir = new File(keyStoreProperties.getPath());
             if (!keyStoreDir.exists()) {
-                logger.error("Key store directory does not exist: {}", keyStoreDir.getAbsolutePath());
-                throw new RuntimeException("Key store directory does not exist. Please create it manually.");
+                keyStoreDir.mkdirs();
+                logger.info("Key store directory created: {}", keyStoreDir.getAbsolutePath());
             }
             
             File privateKeyFile = new File(keyStoreDir, keyStoreProperties.getPrivateKeyFile());
@@ -46,9 +48,9 @@ public class KeyPairManager {
                 this.keyPair = loadKeysFromFiles(privateKeyFile, publicKeyFile);
                 logger.info("Loaded existing key pair from: {}", keyStoreDir.getAbsolutePath());
             } else {
-                // Anahtarlar yoksa hata fırlatalım - artık otomatik oluşturmayacak
-                logger.error("Key files not found at: {}", keyStoreDir.getAbsolutePath());
-                throw new RuntimeException("Key files not found. Please create them manually.");
+                // Anahtarlar yoksa otomatik oluşturalım
+                logger.info("Key files not found, generating new keys at: {}", keyStoreDir.getAbsolutePath());
+                this.keyPair = generateAndSaveNewKeyPair(privateKeyFile, publicKeyFile);
             }
             
             // Anahtar çiftinin yüklenip yüklenmediğini kontrol edelim
@@ -96,7 +98,40 @@ public class KeyPairManager {
         }
     }
     
-    // generateAndSaveNewKeyPair metodunu tamamen kaldırabilirsiniz
+    // Yeni bir anahtar çifti oluştur ve dosyalara kaydet
+    private KeyPair generateAndSaveNewKeyPair(File privateKeyFile, File publicKeyFile) throws Exception {
+        try {
+            // RSA anahtar çifti oluştur
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+            keyPairGenerator.initialize(2048);
+            KeyPair newKeyPair = keyPairGenerator.generateKeyPair();
+            
+            // Private key'i PEM formatında kaydet
+            try (FileWriter privateKeyWriter = new FileWriter(privateKeyFile)) {
+                byte[] privateKeyBytes = newKeyPair.getPrivate().getEncoded();
+                String privateKeyPem = "-----BEGIN PRIVATE KEY-----\n" +
+                                       Base64.getEncoder().encodeToString(privateKeyBytes) +
+                                       "\n-----END PRIVATE KEY-----";
+                privateKeyWriter.write(privateKeyPem);
+            }
+            
+            // Public key'i PEM formatında kaydet
+            try (FileWriter publicKeyWriter = new FileWriter(publicKeyFile)) {
+                byte[] publicKeyBytes = newKeyPair.getPublic().getEncoded();
+                String publicKeyPem = "-----BEGIN PUBLIC KEY-----\n" +
+                                      Base64.getEncoder().encodeToString(publicKeyBytes) +
+                                      "\n-----END PUBLIC KEY-----";
+                publicKeyWriter.write(publicKeyPem);
+            }
+            
+            logger.info("Generated and saved new RSA key pair");
+            
+            return newKeyPair;
+        } catch (Exception e) {
+            logger.error("Error generating and saving new key pair", e);
+            throw e;
+        }
+    }
 
     public RSAPublicKey getPublicKey() {
         if (keyPair == null) {

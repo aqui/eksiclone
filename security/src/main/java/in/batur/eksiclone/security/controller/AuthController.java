@@ -11,7 +11,7 @@ import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -41,17 +41,26 @@ public class AuthController {
     
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private JwtService jwtService;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private UserDetailsService userDetailsService;
+    @Value("${spring.profiles.active:prod}")
+    private String activeProfile;
+    
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
+    private final UserRepository userRepository;
+    private final UserDetailsService userDetailsService;
+    
+    // Constructor injection kullanıyoruz
+    public AuthController(
+        AuthenticationManager authenticationManager,
+        JwtService jwtService,
+        UserRepository userRepository,
+        UserDetailsService userDetailsService
+    ) {
+        this.authenticationManager = authenticationManager;
+        this.jwtService = jwtService;
+        this.userRepository = userRepository;
+        this.userDetailsService = userDetailsService;
+    }
     
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
@@ -59,29 +68,10 @@ public class AuthController {
             // Log detailed info for debugging
             logger.info("Login attempt for username: {}", loginRequest.getUsername());
             
-            // First try standard authentication
-            Authentication authentication;
-            try {
-                authentication = authenticationManager.authenticate(
-                        new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
-            } catch (BadCredentialsException e) {
-                // Check if this is a development environment test with "eksiclone_password"
-                if ("eksiclone_password".equals(loginRequest.getPassword())) {
-                    logger.warn("Using development password for user: {}", loginRequest.getUsername());
-//                    User user = userRepository.findByUsername(loginRequest.getUsername())
-//                            .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
-                    
-                    // Create a dev authentication token bypassing password check
-                    authentication = new UsernamePasswordAuthenticationToken(
-                            userDetailsService.loadUserByUsername(loginRequest.getUsername()),
-                            null,
-                            userDetailsService.loadUserByUsername(loginRequest.getUsername()).getAuthorities()
-                    );
-                } else {
-                    // Re-throw if it's not our dev case
-                    throw e;
-                }
-            }
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            loginRequest.getUsername(), 
+                            loginRequest.getPassword()));
             
             SecurityContextHolder.getContext().setAuthentication(authentication);
             
@@ -108,11 +98,11 @@ public class AuthController {
         } catch (BadCredentialsException e) {
             logger.warn("Failed login attempt - bad credentials: {}", loginRequest.getUsername());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "invalid_credentials", "message", "Hatalı kullanıcı adı veya şifre"));
+                    .body(Map.of("error", "invalid_credentials", "message", "Invalid username or password"));
         } catch (Exception e) {
             logger.error("Login error: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "authentication_error", "message", "Kimlik doğrulama sırasında bir hata oluştu"));
+                    .body(Map.of("error", "authentication_error", "message", "An error occurred during authentication"));
         }
     }
 
@@ -121,7 +111,7 @@ public class AuthController {
         try {
             if (!jwtService.validateToken(request.getRefreshToken())) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("error", "invalid_token", "message", "Geçersiz yenileme token'ı"));
+                        .body(Map.of("error", "invalid_token", "message", "Invalid refresh token"));
             }
             
             String username = jwtService.getUsernameFromToken(request.getRefreshToken());
@@ -133,13 +123,13 @@ public class AuthController {
             String newToken = jwtService.generateToken(authentication);
             
             User user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı"));
+                    .orElseThrow(() -> new RuntimeException("User not found"));
             
             List<String> roles = user.getRoles().stream()
                     .map(Role::getRoleName)
                     .collect(Collectors.toList());
             
-            logger.info("Token başarıyla yenilendi: {}", user.getUsername());
+            logger.info("Token successfully refreshed: {}", user.getUsername());
             
             return ResponseEntity.ok(new AuthResponse(
                     newToken, 
@@ -149,17 +139,17 @@ public class AuthController {
                     user.getEmail(), 
                     roles));
         } catch (ExpiredJwtException e) {
-            logger.warn("Token yenileme başarısız - token süresi dolmuş");
+            logger.warn("Token refresh failed - token expired");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "expired_token", "message", "Yenileme token'ının süresi dolmuş"));
+                    .body(Map.of("error", "expired_token", "message", "Refresh token has expired"));
         } catch (MalformedJwtException | SignatureException | UnsupportedJwtException | IllegalArgumentException e) {
-            logger.warn("Token yenileme başarısız - geçersiz token: {}", e.getMessage());
+            logger.warn("Token refresh failed - invalid token: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "invalid_token", "message", "Geçersiz yenileme token'ı"));
+                    .body(Map.of("error", "invalid_token", "message", "Invalid refresh token"));
         } catch (Exception e) {
-            logger.error("Token yenileme sırasında hata: {}", e.getMessage());
+            logger.error("Token refresh error: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "token_refresh_error", "message", "Token yenileme sırasında bir hata oluştu"));
+                    .body(Map.of("error", "token_refresh_error", "message", "An error occurred during token refresh"));
         }
     }
     

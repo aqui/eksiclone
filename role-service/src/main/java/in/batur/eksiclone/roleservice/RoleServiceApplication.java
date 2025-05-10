@@ -4,7 +4,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -15,14 +14,14 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 @EntityScan(basePackages = "in.batur.eksiclone.entity")
 @ComponentScan(basePackages = {
     "in.batur.eksiclone.roleservice",
-    "in.batur.eksiclone.security.jwt",
-    "in.batur.eksiclone.security.filter",
-    "in.batur.eksiclone.security.service",
-    "in.batur.eksiclone.security.util",
-    "in.batur.eksiclone.security.dto",
-    "in.batur.eksiclone.security.config"  // Bu satırı ekleyin
+    "in.batur.eksiclone.security"
 }, excludeFilters = {
-    @Filter(type = FilterType.REGEX, pattern = "in\\.batur\\.eksiclone\\.security\\.controller\\..*")
+    @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, 
+        classes = {
+            in.batur.eksiclone.security.controller.JwkSetController.class,
+            in.batur.eksiclone.security.config.SecurityConfig.class
+        }
+    )
 })
 public class RoleServiceApplication {
     public static void main(String[] args) {

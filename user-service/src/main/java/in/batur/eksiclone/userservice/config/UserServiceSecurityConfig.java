@@ -3,6 +3,7 @@ package in.batur.eksiclone.userservice.config;
 import in.batur.eksiclone.security.filter.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,7 +22,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class UserServiceSecurityConfig {
     
-    // Constructor injection kullanın (daha iyi bir uygulama)
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     
     // Constructor injection
@@ -35,6 +35,7 @@ public class UserServiceSecurityConfig {
     }
     
     @Bean
+    @Primary // Birincil bean olduğunu belirtiyoruz
     AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
     }
@@ -60,10 +61,10 @@ public class UserServiceSecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> 
-                auth.requestMatchers(HttpMethod.GET, "/api/v1/users").hasAnyRole("ADMIN")
-                   .requestMatchers(HttpMethod.POST, "/api/v1/users").hasAnyRole("ADMIN")
-                   .requestMatchers(HttpMethod.PUT, "/api/v1/users/**").hasAnyRole("ADMIN")
-                   .requestMatchers(HttpMethod.DELETE, "/api/v1/users/**").hasAnyRole("ADMIN")
+                auth.requestMatchers(HttpMethod.GET, "/api/v1/users").hasRole("ADMIN")
+                   .requestMatchers(HttpMethod.POST, "/api/v1/users").hasRole("ADMIN")
+                   .requestMatchers(HttpMethod.PUT, "/api/v1/users/**").hasRole("ADMIN")
+                   .requestMatchers(HttpMethod.DELETE, "/api/v1/users/**").hasRole("ADMIN")
                    .requestMatchers(HttpMethod.GET, "/api/v1/users/**").hasAnyRole("ADMIN", "USER", "MODERATOR")
                    .anyRequest().authenticated()
             )
@@ -72,7 +73,7 @@ public class UserServiceSecurityConfig {
                 exception.authenticationEntryPoint((request, response, authException) -> {
                     response.setContentType("application/json");
                     response.setStatus(401);
-                    response.getWriter().write("{\"error\":\"unauthorized\",\"message\":\"Kimlik doğrulama gerekli\"}");
+                    response.getWriter().write("{\"error\":\"unauthorized\",\"message\":\"Authentication required\"}");
                 })
             )
             .build();

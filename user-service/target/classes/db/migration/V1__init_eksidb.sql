@@ -33,13 +33,17 @@ VALUES
     (NOW(), NOW(), 'ROLE_MODERATOR', 0),
     (NOW(), NOW(), 'ROLE_USER', 0);
 
--- Varsayılan kullanıcılar (Güvenlik amaçlı farklı şifreler)
--- Not: Şifreler BCrypt ile hashlenmiştir. Tüm kullanıcılar için orijinal şifre: "password123"
+-- Varsayılan kullanıcılar
+-- Kullanıcıların şifreleri sistemin ilk başlatılması sırasında otomatik olarak oluşturulacak
+-- Şifrelerin hashlenmiş halini SQL'de direkt yazmak yerine Java kodu içinde üretilecek
+-- Bu sayede daha güvenli bir yaklaşım elde edilecek
+
+-- Default password is "password123" which will be hashed by the initialization service
 INSERT INTO users (created_date, last_updated_date, username, email, password, name, last_name, version)
 VALUES 
-    (NOW(), NOW(), 'admin_user', 'admin@example.com', '$2a$12$oZV.nkCo2MLCU8DgSzvnaeXHMwKj5m2o4SRCZ/2afPBrCMPrvfE4W', 'Admin', 'User', 0),
-    (NOW(), NOW(), 'moderator_user', 'moderator@example.com', '$2a$12$oZV.nkCo2MLCU8DgSzvnaeXHMwKj5m2o4SRCZ/2afPBrCMPrvfE4W', 'Moderator', 'User', 0),
-    (NOW(), NOW(), 'normal_user', 'user@example.com', '$2a$12$oZV.nkCo2MLCU8DgSzvnaeXHMwKj5m2o4SRCZ/2afPBrCMPrvfE4W', 'Normal', 'User', 0);
+    (NOW(), NOW(), 'admin_user', 'admin@example.com', '${DEFAULT_ADMIN_PASSWORD}', 'Admin', 'User', 0),
+    (NOW(), NOW(), 'moderator_user', 'moderator@example.com', '${DEFAULT_MODERATOR_PASSWORD}', 'Moderator', 'User', 0),
+    (NOW(), NOW(), 'normal_user', 'user@example.com', '${DEFAULT_USER_PASSWORD}', 'Normal', 'User', 0);
 
 -- Kullanıcı-rol ilişkileri
 INSERT INTO user_role (user_id, role_id)

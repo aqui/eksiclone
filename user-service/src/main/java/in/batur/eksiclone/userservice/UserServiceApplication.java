@@ -13,24 +13,21 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EnableJpaRepositories(basePackages = "in.batur.eksiclone.repository")
 @EntityScan(basePackages = "in.batur.eksiclone.entity")
 @ComponentScan(basePackages = {
-    "in.batur.eksiclone.userservice", 
-    "in.batur.eksiclone.security.jwt",  
-    "in.batur.eksiclone.security.filter", 
-    "in.batur.eksiclone.security.service", 
-    "in.batur.eksiclone.security.util", 
-    "in.batur.eksiclone.security.dto",
-    "in.batur.eksiclone.security.config"  // Eğer bu satır eksikse ekleyin
+    "in.batur.eksiclone.userservice",  // User service sınıfları
+    "in.batur.eksiclone.security.jwt", // JWT servisi
+    "in.batur.eksiclone.security.filter", // Filtreler
+    "in.batur.eksiclone.security.service", // UserDetailsService
+    "in.batur.eksiclone.security.util", // JWT util sınıfları
+    "in.batur.eksiclone.security.dto", // DTO'lar
+    "in.batur.eksiclone.security.controller" // Auth controller
+}, excludeFilters = {
+    @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, 
+        classes = {
+            in.batur.eksiclone.security.config.SecurityConfig.class, // Kendi security config sınıfımızı kullanacağız
+            in.batur.eksiclone.security.controller.JwkSetController.class // Endpoint çakışmasını önlemek için
+        }
+    )
 })
-// Exclude only JwkSetController, but keep AuthController
-@ComponentScan(basePackages = "in.batur.eksiclone.security.controller", 
-               excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, 
-                                                     classes = {
-                                                         in.batur.eksiclone.security.controller.JwkSetController.class
-                                                     }))
-// Exclude SecurityConfig
-@ComponentScan(basePackages = "in.batur.eksiclone.security.config", 
-               excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, 
-                                                     classes = in.batur.eksiclone.security.config.SecurityConfig.class))
 public class UserServiceApplication {
     public static void main(String[] args) {
         SpringApplication.run(UserServiceApplication.class, args);

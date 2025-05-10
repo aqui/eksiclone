@@ -6,7 +6,6 @@ import in.batur.eksiclone.repository.RoleRepository;
 import in.batur.eksiclone.repository.UserRepository;
 import in.batur.eksiclone.userservice.exception.UserNotFoundException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,17 +17,27 @@ import java.util.stream.Collectors;
 @Transactional
 @Slf4j
 public class UserServiceImpl implements UserService {
-    @Autowired
-    private UserRepository userRepository;
+    
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
+    private final UserMessagingService messagingService;
 
-    @Autowired
-    private RoleRepository roleRepository;
-    
-    @Autowired
-    private UserMapper userMapper;
-    
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    // Constructor injection
+    public UserServiceImpl(
+        UserRepository userRepository, 
+        RoleRepository roleRepository, 
+        UserMapper userMapper, 
+        PasswordEncoder passwordEncoder,
+        UserMessagingService messagingService
+    ) {
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
+        this.userMapper = userMapper;
+        this.passwordEncoder = passwordEncoder;
+        this.messagingService = messagingService;
+    }
 
     @Override
     public List<UserDTO> findAll() {
@@ -71,6 +80,10 @@ public class UserServiceImpl implements UserService {
         user.setRoles(roles);
 
         User savedUser = userRepository.save(user);
+        
+        // Send message for user creation
+        messagingService.sendUserCreatedEvent(savedUser);
+        
         return userMapper.toDto(savedUser);
     }
 
@@ -104,6 +117,10 @@ public class UserServiceImpl implements UserService {
         user.setRoles(roles);
 
         User updatedUser = userRepository.save(user);
+        
+        // Send message for user update
+        messagingService.sendUserUpdatedEvent(updatedUser);
+        
         return userMapper.toDto(updatedUser);
     }
 
@@ -112,6 +129,9 @@ public class UserServiceImpl implements UserService {
         log.info("Deleting user with id {}", id);
         User user = userRepository.findById(id)
             .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+        
+        // Send message before deleting the user
+        messagingService.sendUserDeletedEvent(user);
         
         // Delete the user
         userRepository.delete(user);
