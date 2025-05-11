@@ -15,9 +15,9 @@ public class CorsConfig {
     CorsWebFilter corsWebFilter() {
         CorsConfiguration corsConfig = new CorsConfiguration();
         corsConfig.setAllowedOrigins(Arrays.asList("*"));
-        corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
-        corsConfig.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
-        corsConfig.setExposedHeaders(Arrays.asList("X-Total-Count", "Link"));
+        corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"));
+        corsConfig.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", "Cache-Control"));
+        corsConfig.setExposedHeaders(Arrays.asList("X-Total-Count", "Link", "Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"));
         corsConfig.setMaxAge(3600L);
         corsConfig.setAllowCredentials(true);
 

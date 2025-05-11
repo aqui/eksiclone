@@ -34,8 +34,8 @@
         <module>user-service</module>
         <module>gateway</module>
         <module>eureka-server</module>
-        <module>security</module>
         <module>config-server</module>
+        <module>auth-service</module>
     </modules>
 
     <dependencyManagement>

@@ -1,4 +1,4 @@
-package in.batur.eksiclone.userservice;
+package in.batur.eksiclone.authservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -14,10 +14,11 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EntityScan(basePackages = "in.batur.eksiclone.entity")
 @EnableAsync
 @ComponentScan(basePackages = {
-    "in.batur.eksiclone.userservice"
+    "in.batur.eksiclone.authservice",
+    "in.batur.eksiclone.security"  // Add this line
 })
-public class UserServiceApplication {
+public class AuthServiceApplication {
     public static void main(String[] args) {
-        SpringApplication.run(UserServiceApplication.class, args);
+        SpringApplication.run(AuthServiceApplication.class, args);
     }
 }

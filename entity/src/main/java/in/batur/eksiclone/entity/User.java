@@ -39,4 +39,9 @@ public class User extends BaseEntity {
         inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private List<Role> roles = new ArrayList<>();
+    
+    // Clear roles helper method
+    public void clearRoles() {
+        this.roles.clear();
+    }
 }

@@ -76,7 +76,15 @@ public class UserController {
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
+        try {
+            userService.deleteUser(id);
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            // Hata loglaması
+            System.out.println("User deletion error: " + e.getMessage());
+            e.printStackTrace();
+            // Exception Handler tarafından yakalanacak şekilde hatayı yeniden fırlat
+            throw e;
+        }
     }
 }

@@ -126,16 +126,31 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void deleteUser(Long id) {
         log.info("Deleting user with id {}", id);
+        
+        // İlişkileri temizlemek için önce kullanıcıyı bulalım
         User user = userRepository.findById(id)
             .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
         
-        // Send message before deleting the user
-        messagingService.sendUserDeletedEvent(user);
-        
-        // Delete the user
-        userRepository.delete(user);
-        log.info("User deleted successfully: {}", user.getUsername());
+        try {
+            // İlk önce kullanıcı-rol ilişkilerini temizleyelim (bu önemli!)
+            // User entity'sinin roles alanını temizle
+            user.getRoles().clear();
+            userRepository.saveAndFlush(user);
+            
+            // İlişkileri temizledikten sonra, olayları gönderelim
+            messagingService.sendUserDeletedEvent(user);
+            
+            // Şimdi kullanıcıyı silebiliriz
+            userRepository.delete(user);
+            userRepository.flush(); // Değişiklikleri hemen veritabanına yansıt
+            
+            log.info("User deleted successfully: {}", user.getUsername());
+        } catch (Exception e) {
+            log.error("Error deleting user: {}", e.getMessage(), e);
+            throw new RuntimeException("Could not delete user: " + e.getMessage(), e);
+        }
     }
 }
