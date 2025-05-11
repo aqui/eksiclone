@@ -76,7 +76,7 @@ public class AuthController {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            String jwt = jwtService.generateToken(authentication);
+            String accessToken = jwtService.generateToken(authentication);
             String refreshToken = jwtService.generateRefreshToken(userDetails);
             
             User user = userRepository.findByUsername(userDetails.getUsername())
@@ -89,7 +89,7 @@ public class AuthController {
             logger.info("User successfully logged in: {}", user.getUsername());
             
             return ResponseEntity.ok(new AuthResponse(
-                    jwt, 
+            		accessToken, 
                     refreshToken,
                     user.getId(), 
                     user.getUsername(), 
