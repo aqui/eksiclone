@@ -45,8 +45,13 @@ public class KeyPairManager {
             
             // Anahtarların var olup olmadığını kontrol edelim
             if (privateKeyFile.exists() && publicKeyFile.exists()) {
-                this.keyPair = loadKeysFromFiles(privateKeyFile, publicKeyFile);
-                logger.info("Loaded existing key pair from: {}", keyStoreDir.getAbsolutePath());
+                try {
+                    this.keyPair = loadKeysFromFiles(privateKeyFile, publicKeyFile);
+                    logger.info("Loaded existing key pair from: {}", keyStoreDir.getAbsolutePath());
+                } catch (Exception e) {
+                    logger.warn("Failed to load existing keys, generating new ones: {}", e.getMessage());
+                    this.keyPair = generateAndSaveNewKeyPair(privateKeyFile, publicKeyFile);
+                }
             } else {
                 // Anahtarlar yoksa otomatik oluşturalım
                 logger.info("Key files not found, generating new keys at: {}", keyStoreDir.getAbsolutePath());
@@ -56,6 +61,11 @@ public class KeyPairManager {
             // Anahtar çiftinin yüklenip yüklenmediğini kontrol edelim
             if (this.keyPair == null) {
                 throw new RuntimeException("Key pair is null after initialization");
+            }
+            
+            // Doğrulama yapalım - Public key'in gerçekten public key olduğunu test edelim
+            if (!(this.keyPair.getPublic() instanceof RSAPublicKey)) {
+                throw new RuntimeException("Public key is not an RSA public key");
             }
             
         } catch (Exception e) {
@@ -90,6 +100,11 @@ public class KeyPairManager {
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
             PrivateKey privateKey = keyFactory.generatePrivate(new PKCS8EncodedKeySpec(privateKeyBytes));
             PublicKey publicKey = keyFactory.generatePublic(new X509EncodedKeySpec(publicKeyBytes));
+            
+            // Oluşturulan anahtarları doğrula
+            if (!(privateKey instanceof RSAPrivateKey) || !(publicKey instanceof RSAPublicKey)) {
+                throw new Exception("One or both keys are not RSA keys");
+            }
             
             return new KeyPair(publicKey, privateKey);
         } catch (Exception e) {
