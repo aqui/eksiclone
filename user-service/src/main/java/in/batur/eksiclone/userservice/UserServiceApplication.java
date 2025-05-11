@@ -7,24 +7,26 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication
 @EnableDiscoveryClient
 @EnableJpaRepositories(basePackages = "in.batur.eksiclone.repository")
 @EntityScan(basePackages = "in.batur.eksiclone.entity")
+@EnableAsync
 @ComponentScan(basePackages = {
-    "in.batur.eksiclone.userservice",  // User service sınıfları
-    "in.batur.eksiclone.security.jwt", // JWT servisi
-    "in.batur.eksiclone.security.filter", // Filtreler
-    "in.batur.eksiclone.security.service", // UserDetailsService
-    "in.batur.eksiclone.security.util", // JWT util sınıfları
-    "in.batur.eksiclone.security.dto", // DTO'lar
-    "in.batur.eksiclone.security.controller" // Auth controller
+    "in.batur.eksiclone.userservice",  // Tüm User Service ve taşınan Role Service sınıfları
+    "in.batur.eksiclone.security.jwt", 
+    "in.batur.eksiclone.security.filter", 
+    "in.batur.eksiclone.security.service", 
+    "in.batur.eksiclone.security.util", 
+    "in.batur.eksiclone.security.dto", 
+    "in.batur.eksiclone.security.controller" 
 }, excludeFilters = {
     @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, 
         classes = {
-            in.batur.eksiclone.security.config.SecurityConfig.class, // Kendi security config sınıfımızı kullanacağız
-            in.batur.eksiclone.security.controller.JwkSetController.class // Endpoint çakışmasını önlemek için
+            in.batur.eksiclone.security.config.SecurityConfig.class,
+            in.batur.eksiclone.security.controller.JwkSetController.class
         }
     )
 })

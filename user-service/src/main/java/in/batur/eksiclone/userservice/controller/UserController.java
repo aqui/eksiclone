@@ -1,6 +1,6 @@
 package in.batur.eksiclone.userservice.controller;
 
-import in.batur.eksiclone.userservice.service.UserDTO;
+import in.batur.eksiclone.userservice.dto.UserDTO;
 import in.batur.eksiclone.userservice.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

@@ -2,6 +2,8 @@ package in.batur.eksiclone.userservice.service;
 
 import in.batur.eksiclone.entity.Role;
 import in.batur.eksiclone.entity.User;
+import in.batur.eksiclone.userservice.dto.UserDTO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;

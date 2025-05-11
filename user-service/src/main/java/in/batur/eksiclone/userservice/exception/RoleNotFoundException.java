@@ -1,4 +1,4 @@
-package in.batur.eksiclone.roleservice.exception;
+package in.batur.eksiclone.userservice.exception;
 
 public class RoleNotFoundException extends RuntimeException {
     private static final long serialVersionUID = 1L;

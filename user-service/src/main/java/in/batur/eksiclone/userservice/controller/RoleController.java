@@ -1,7 +1,5 @@
-package in.batur.eksiclone.roleservice.controller;
+package in.batur.eksiclone.userservice.controller;
 
-import in.batur.eksiclone.roleservice.service.RoleDTO;
-import in.batur.eksiclone.roleservice.service.RoleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -11,6 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import in.batur.eksiclone.userservice.dto.RoleDTO;
+import in.batur.eksiclone.userservice.service.RoleService;
 
 import java.util.List;
 

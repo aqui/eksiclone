@@ -61,11 +61,21 @@ public class UserServiceSecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> 
+                // Kullanıcı endpoint'leri için yetkilendirme kuralları
                 auth.requestMatchers(HttpMethod.GET, "/api/v1/users").hasRole("ADMIN")
                    .requestMatchers(HttpMethod.POST, "/api/v1/users").hasRole("ADMIN")
                    .requestMatchers(HttpMethod.PUT, "/api/v1/users/**").hasRole("ADMIN")
                    .requestMatchers(HttpMethod.DELETE, "/api/v1/users/**").hasRole("ADMIN")
                    .requestMatchers(HttpMethod.GET, "/api/v1/users/**").hasAnyRole("ADMIN", "USER", "MODERATOR")
+                   
+                   // Rol endpoint'leri için yetkilendirme kuralları
+                   .requestMatchers(HttpMethod.GET, "/api/v1/roles").hasRole("ADMIN")
+                   .requestMatchers(HttpMethod.POST, "/api/v1/roles").hasRole("ADMIN")
+                   .requestMatchers(HttpMethod.PUT, "/api/v1/roles/**").hasRole("ADMIN")
+                   .requestMatchers(HttpMethod.DELETE, "/api/v1/roles/**").hasRole("ADMIN")
+                   .requestMatchers(HttpMethod.GET, "/api/v1/roles/**").hasAnyRole("ADMIN", "USER", "MODERATOR")
+                   
+                   // Diğer tüm isteklerin kimlik doğrulaması gerektirmesi
                    .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

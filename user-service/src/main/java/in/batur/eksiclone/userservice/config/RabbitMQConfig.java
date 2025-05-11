@@ -20,6 +20,9 @@ public class RabbitMQConfig {
 
     @Value("${rabbitmq.queue.user-events:user-events-queue}")
     private String userEventsQueue;
+    
+    @Value("${rabbitmq.queue.role-events:role-events-queue}")
+    private String roleEventsQueue;
 
     @Value("${rabbitmq.routing.user-create:user.create}")
     private String userCreateRoutingKey;
@@ -29,6 +32,15 @@ public class RabbitMQConfig {
     
     @Value("${rabbitmq.routing.user-delete:user.delete}")
     private String userDeleteRoutingKey;
+    
+    @Value("${rabbitmq.routing.role-create:role.create}")
+    private String roleCreateRoutingKey;
+    
+    @Value("${rabbitmq.routing.role-update:role.update}")
+    private String roleUpdateRoutingKey;
+    
+    @Value("${rabbitmq.routing.role-delete:role.delete}")
+    private String roleDeleteRoutingKey;
 
     @Bean
     TopicExchange exchange() {
@@ -38,6 +50,11 @@ public class RabbitMQConfig {
     @Bean
     Queue userEventsQueue() {
         return new Queue(userEventsQueue, true);
+    }
+    
+    @Bean
+    Queue roleEventsQueue() {
+        return new Queue(roleEventsQueue, true);
     }
 
     @Bean
@@ -53,6 +70,21 @@ public class RabbitMQConfig {
     @Bean
     Binding userDeleteBinding(Queue userEventsQueue, TopicExchange exchange) {
         return BindingBuilder.bind(userEventsQueue).to(exchange).with(userDeleteRoutingKey);
+    }
+    
+    @Bean
+    Binding roleCreateBinding(Queue roleEventsQueue, TopicExchange exchange) {
+        return BindingBuilder.bind(roleEventsQueue).to(exchange).with(roleCreateRoutingKey);
+    }
+    
+    @Bean
+    Binding roleUpdateBinding(Queue roleEventsQueue, TopicExchange exchange) {
+        return BindingBuilder.bind(roleEventsQueue).to(exchange).with(roleUpdateRoutingKey);
+    }
+    
+    @Bean
+    Binding roleDeleteBinding(Queue roleEventsQueue, TopicExchange exchange) {
+        return BindingBuilder.bind(roleEventsQueue).to(exchange).with(roleDeleteRoutingKey);
     }
 
     @Bean

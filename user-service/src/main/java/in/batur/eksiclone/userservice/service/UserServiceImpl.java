@@ -4,6 +4,7 @@ import in.batur.eksiclone.entity.Role;
 import in.batur.eksiclone.entity.User;
 import in.batur.eksiclone.repository.RoleRepository;
 import in.batur.eksiclone.repository.UserRepository;
+import in.batur.eksiclone.userservice.dto.UserDTO;
 import in.batur.eksiclone.userservice.exception.UserNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;

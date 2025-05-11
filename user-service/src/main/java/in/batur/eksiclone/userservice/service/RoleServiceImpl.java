@@ -1,11 +1,11 @@
-package in.batur.eksiclone.roleservice.service;
+package in.batur.eksiclone.userservice.service;
 
 import in.batur.eksiclone.entity.Role;
 import in.batur.eksiclone.repository.RoleRepository;
 import in.batur.eksiclone.repository.UserRepository;
-import in.batur.eksiclone.roleservice.exception.RoleNotFoundException;
+import in.batur.eksiclone.userservice.dto.RoleDTO;
+import in.batur.eksiclone.userservice.exception.RoleNotFoundException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,14 +16,23 @@ import java.util.stream.Collectors;
 @Transactional
 @Slf4j
 public class RoleServiceImpl implements RoleService {
-    @Autowired
-    private RoleRepository roleRepository;
     
-    @Autowired
-    private UserRepository userRepository;
-    
-    @Autowired
-    private RoleMapper roleMapper;
+    private final RoleRepository roleRepository;
+    private final UserRepository userRepository;
+    private final RoleMapper roleMapper;
+    private final RoleMessagingService messagingService;
+
+    public RoleServiceImpl(
+        RoleRepository roleRepository,
+        UserRepository userRepository,
+        RoleMapper roleMapper,
+        RoleMessagingService messagingService
+    ) {
+        this.roleRepository = roleRepository;
+        this.userRepository = userRepository;
+        this.roleMapper = roleMapper;
+        this.messagingService = messagingService;
+    }
 
     @Override
     public List<RoleDTO> findAll() {
@@ -53,6 +62,10 @@ public class RoleServiceImpl implements RoleService {
         
         Role role = roleMapper.toEntity(roleDTO);
         Role savedRole = roleRepository.save(role);
+        
+        // Send message for role creation
+        messagingService.sendRoleCreatedEvent(savedRole);
+        
         return roleMapper.toDto(savedRole);
     }
 
@@ -69,6 +82,10 @@ public class RoleServiceImpl implements RoleService {
         
         roleMapper.updateEntity(roleDTO, role);
         Role updatedRole = roleRepository.save(role);
+        
+        // Send message for role update
+        messagingService.sendRoleUpdatedEvent(updatedRole);
+        
         return roleMapper.toDto(updatedRole);
     }
 
@@ -85,6 +102,10 @@ public class RoleServiceImpl implements RoleService {
                 ". It is assigned to " + userCount + " user(s).");
         }
         
+        // Send message before deleting the role
+        messagingService.sendRoleDeletedEvent(role);
+        
         roleRepository.deleteById(id);
+        log.info("Role deleted successfully: {}", role.getRoleName());
     }
 }

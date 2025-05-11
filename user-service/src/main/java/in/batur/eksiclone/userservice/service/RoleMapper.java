@@ -1,6 +1,8 @@
-package in.batur.eksiclone.roleservice.service;
+package in.batur.eksiclone.userservice.service;
 
 import in.batur.eksiclone.entity.Role;
+import in.batur.eksiclone.userservice.dto.RoleDTO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;

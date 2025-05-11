@@ -1,6 +1,7 @@
 package in.batur.eksiclone.userservice.service;
 
 import in.batur.eksiclone.entity.User;
+import in.batur.eksiclone.userservice.dto.UserDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;

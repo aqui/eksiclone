@@ -1,4 +1,4 @@
-package in.batur.eksiclone.roleservice.service;
+package in.batur.eksiclone.userservice.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

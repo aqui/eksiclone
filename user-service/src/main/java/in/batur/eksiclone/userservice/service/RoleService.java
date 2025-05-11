@@ -1,6 +1,8 @@
-package in.batur.eksiclone.roleservice.service;
+package in.batur.eksiclone.userservice.service;
 
 import java.util.List;
+
+import in.batur.eksiclone.userservice.dto.RoleDTO;
 
 public interface RoleService {
     List<RoleDTO> findAll();
