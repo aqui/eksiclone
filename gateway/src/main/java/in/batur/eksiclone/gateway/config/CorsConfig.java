@@ -10,20 +10,18 @@ import java.util.Arrays;
 
 @Configuration
 public class CorsConfig {
-    
+
     @Bean
     CorsWebFilter corsWebFilter() {
         CorsConfiguration corsConfig = new CorsConfiguration();
-        corsConfig.setAllowedOrigins(Arrays.asList("*"));
-        corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"));
-        corsConfig.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", "Cache-Control"));
-        corsConfig.setExposedHeaders(Arrays.asList("X-Total-Count", "Link", "Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"));
+        corsConfig.setAllowedOrigins(Arrays.asList("*")); // In production, limit this to specific origins
         corsConfig.setMaxAge(3600L);
+        corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        corsConfig.setAllowedHeaders(Arrays.asList("Content-Type", "Authorization"));
         corsConfig.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfig);
-        
         return new CorsWebFilter(source);
     }
 }

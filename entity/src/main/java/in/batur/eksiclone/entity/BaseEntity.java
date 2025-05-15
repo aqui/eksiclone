@@ -19,6 +19,9 @@ public abstract class BaseEntity {
 
     @Column(name = "last_updated_date")
     private LocalDateTime lastUpdatedDate;
+    
+    @Version  // Optimistic locking için sürüm alanı eklendi
+    private Long version;
 
     @PrePersist
     protected void onCreate() {

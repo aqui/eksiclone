@@ -1,13 +1,19 @@
 package in.batur.eksiclone.userservice.service;
 
-import java.util.List;
-
+import in.batur.eksiclone.userservice.dto.CreateRoleRequest;
 import in.batur.eksiclone.userservice.dto.RoleDTO;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 public interface RoleService {
-    List<RoleDTO> findAll();
-    RoleDTO findById(Long id);
-    RoleDTO createRole(RoleDTO roleDTO);
-    RoleDTO updateRole(RoleDTO roleDTO);
+    Page<RoleDTO> getAllRoles(Pageable pageable);
+    
+    RoleDTO getRoleById(Long id);
+    
+    RoleDTO createRole(CreateRoleRequest request);
+    
+    RoleDTO updateRole(Long id, CreateRoleRequest request);
+    
     void deleteRole(Long id);
 }
