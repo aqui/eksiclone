@@ -1,153 +1,142 @@
 package in.batur.eksiclone.favoriteservice.service.impl;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import java.util.ArrayList;
-import java.util.List;
+
+import in.batur.eksiclone.entity.entry.Entry;
+import in.batur.eksiclone.entity.favorite.Favorite;
+import in.batur.eksiclone.entity.user.User;
 import in.batur.eksiclone.favoriteservice.dto.CreateFavoriteRequest;
 import in.batur.eksiclone.favoriteservice.dto.FavoriteDTO;
+import in.batur.eksiclone.favoriteservice.exception.ResourceNotFoundException;
+import in.batur.eksiclone.favoriteservice.mapper.FavoriteMapper;
 import in.batur.eksiclone.favoriteservice.service.FavoriteService;
+import in.batur.eksiclone.repository.entry.EntryRepository;
+import in.batur.eksiclone.repository.favorite.FavoriteRepository;
+import in.batur.eksiclone.repository.user.UserRepository;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 @Service
 public class FavoriteServiceImpl implements FavoriteService {
 
-    @Override
-    public FavoriteDTO createFavorite(CreateFavoriteRequest request) {
-        // Mock implementation
-        if (request.getUserId() == null || request.getEntryId() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User ID and Entry ID are required");
-        }
-        
-        // Mock favorite creation
-        return FavoriteDTO.builder()
-                .id(1L)
-                .userId(request.getUserId())
-                .username("user" + request.getUserId())
-                .entryId(request.getEntryId())
-                .entryPreview("Sample entry content...")
-                .createdDate(java.time.LocalDateTime.now())
-                .build();
+    private final FavoriteRepository favoriteRepository;
+    private final UserRepository userRepository;
+    private final EntryRepository entryRepository;
+    private final FavoriteMapper favoriteMapper;
+
+    public FavoriteServiceImpl(
+            FavoriteRepository favoriteRepository,
+            UserRepository userRepository,
+            EntryRepository entryRepository,
+            FavoriteMapper favoriteMapper) {
+        this.favoriteRepository = favoriteRepository;
+        this.userRepository = userRepository;
+        this.entryRepository = entryRepository;
+        this.favoriteMapper = favoriteMapper;
     }
 
     @Override
-    public void deleteFavorite(Long id) {
-        // Mock implementation
-        if (id == null || id <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid favorite ID");
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    @CacheEvict(value = {"favorites", "entries"}, allEntries = true)
+    public FavoriteDTO addFavorite(CreateFavoriteRequest request) {
+        User user = findUserById(request.getUserId());
+        Entry entry = findEntryById(request.getEntryId());
+        
+        // Check if already favorited
+        if (favoriteRepository.existsByUserAndEntry(user, entry)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Entry already in favorites");
         }
         
-        // In a real implementation, we would check if the favorite exists and then delete it
+        Favorite favorite = new Favorite();
+        favorite.setUser(user);
+        favorite.setEntry(entry);
+        
+        favorite = favoriteRepository.save(favorite);
+        
+        // Increment favorite count in the entry
+        entry.incrementFavoriteCount();
+        entryRepository.save(entry);
+        
+        return favoriteMapper.toDto(favorite);
+    }
+
+    private User findUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+    }
+
+    private Entry findEntryById(Long id) {
+        return entryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Entry not found with id: " + id));
     }
 
     @Override
-    public void deleteFavoriteByUserAndEntry(Long userId, Long entryId) {
-        // Mock implementation
-        if (userId == null || userId <= 0 || entryId == null || entryId <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid user ID or entry ID");
-        }
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    @CacheEvict(value = {"favorites", "entries"}, allEntries = true)
+    public void removeFavorite(Long userId, Long entryId) {
+        User user = findUserById(userId);
+        Entry entry = findEntryById(entryId);
         
-        // In a real implementation, we would find the favorite by userId and entryId and then delete it
+        // Find and check if favorite exists
+        Favorite favorite = favoriteRepository.findByUserAndEntry(user, entry)
+                .orElseThrow(() -> new ResourceNotFoundException("Favorite not found"));
+        
+        // Delete the favorite
+        favoriteRepository.delete(favorite);
+        
+        // Decrement favorite count in the entry
+        entry.decrementFavoriteCount();
+        entryRepository.save(entry);
     }
 
     @Override
-    public boolean checkFavorite(Long userId, Long entryId) {
-        // Mock implementation
-        if (userId == null || userId <= 0 || entryId == null || entryId <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid user ID or entry ID");
-        }
-        
-        // Mock response - in a real implementation, we would check if the favorite exists
-        return userId % 2 == 0; // Just a mock logic: even user IDs have favorited
+    @Transactional(readOnly = true)
+    public boolean isFavorite(Long userId, Long entryId) {
+        User user = findUserById(userId);
+        Entry entry = findEntryById(entryId);
+        return favoriteRepository.existsByUserAndEntry(user, entry);
     }
 
     @Override
-    public List<FavoriteDTO> getFavoritesByUser(Long userId) {
-        // Mock implementation
-        if (userId == null || userId <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid user ID");
-        }
-        
-        // Mock data
-        List<FavoriteDTO> favorites = new ArrayList<>();
-        for (int i = 1; i <= 5; i++) {
-            favorites.add(FavoriteDTO.builder()
-                    .id((long) i)
-                    .userId(userId)
-                    .username("user" + userId)
-                    .entryId((long) (i * 10))
-                    .entryPreview("Sample entry content " + i)
-                    .createdDate(java.time.LocalDateTime.now().minusDays(i))
-                    .build());
-        }
-        
-        return favorites;
+    @Transactional(readOnly = true)
+    @Cacheable(value = "favorites", key = "'user:' + #userId + ':' + #pageable")
+    public Page<FavoriteDTO> getUserFavorites(Long userId, Pageable pageable) {
+        User user = findUserById(userId);
+        return favoriteRepository.findByUserOrderByCreatedDateDesc(user, pageable)
+                .map(favoriteMapper::toDto);
     }
 
     @Override
-    public Page<FavoriteDTO> getFavoritesByUserPaged(Long userId, Pageable pageable) {
-        // Mock implementation
-        List<FavoriteDTO> favorites = getFavoritesByUser(userId);
-        
-        // Manual pagination (in a real implementation, this would use the repository)
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), favorites.size());
-        
-        return new PageImpl<>(
-                favorites.subList(start, end),
-                pageable,
-                favorites.size());
+    @Transactional(readOnly = true)
+    @Cacheable(value = "favorites", key = "'entry:' + #entryId + ':' + #pageable")
+    public Page<FavoriteDTO> getEntryFavorites(Long entryId, Pageable pageable) {
+        Entry entry = findEntryById(entryId);
+        return favoriteRepository.findByEntryOrderByCreatedDateDesc(entry, pageable)
+                .map(favoriteMapper::toDto);
     }
 
     @Override
-    public List<FavoriteDTO> getFavoritesByEntry(Long entryId) {
-        // Mock implementation
-        if (entryId == null || entryId <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid entry ID");
-        }
-        
-        // Mock data
-        List<FavoriteDTO> favorites = new ArrayList<>();
-        for (int i = 1; i <= 3; i++) {
-            favorites.add(FavoriteDTO.builder()
-                    .id((long) i)
-                    .userId((long) (i * 100))
-                    .username("user" + (i * 100))
-                    .entryId(entryId)
-                    .entryPreview("Sample entry content for entry " + entryId)
-                    .createdDate(java.time.LocalDateTime.now().minusHours(i))
-                    .build());
-        }
-        
-        return favorites;
+    @Transactional(readOnly = true)
+    @Cacheable(value = "favorites", key = "'count:' + #entryId")
+    public long countEntryFavorites(Long entryId) {
+        Entry entry = findEntryById(entryId);
+        return favoriteRepository.countByEntry(entry);
     }
 
     @Override
-    public Page<FavoriteDTO> getFavoritesByEntryPaged(Long entryId, Pageable pageable) {
-        // Mock implementation
-        List<FavoriteDTO> favorites = getFavoritesByEntry(entryId);
-        
-        // Manual pagination (in a real implementation, this would use the repository)
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), favorites.size());
-        
-        return new PageImpl<>(
-                favorites.subList(start, end),
-                pageable,
-                favorites.size());
-    }
-
-    @Override
-    public Long countFavoritesByEntry(Long entryId) {
-        // Mock implementation
-        if (entryId == null || entryId <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid entry ID");
-        }
-        
-        // Mock count (in a real implementation, this would query the database)
-        return 42L; // Mock count
+    @Transactional(readOnly = true)
+    @Cacheable(value = "favorites", key = "'userEntryIds:' + #userId")
+    public List<Long> getUserFavoriteEntryIds(Long userId) {
+        // Check if user exists
+        findUserById(userId);
+        return favoriteRepository.findEntryIdsByUserId(userId);
     }
 }

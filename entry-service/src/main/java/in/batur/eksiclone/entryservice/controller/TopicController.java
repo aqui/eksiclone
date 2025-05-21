@@ -1,5 +1,6 @@
 package in.batur.eksiclone.entryservice.controller;
 
+import in.batur.eksiclone.entryservice.dto.ApiResponse;
 import in.batur.eksiclone.entryservice.dto.CreateTopicRequest;
 import in.batur.eksiclone.entryservice.dto.TopicDTO;
 import in.batur.eksiclone.entryservice.service.TopicService;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Set;
 
 @RestController
-@RequestMapping("/api/topics")
+@RequestMapping("/api/v1/topics")
 public class TopicController {
 
     private final TopicService topicService;
@@ -26,66 +27,68 @@ public class TopicController {
     }
 
     @PostMapping
-    public ResponseEntity<TopicDTO> createTopic(@RequestBody @Validated CreateTopicRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(topicService.createTopic(request));
+    public ResponseEntity<ApiResponse<TopicDTO>> createTopic(@RequestBody @Validated CreateTopicRequest request) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(new ApiResponse<>(topicService.createTopic(request), "Topic created successfully"));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TopicDTO> getTopic(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<TopicDTO>> getTopic(@PathVariable Long id) {
         topicService.incrementViewCount(id);
-        return ResponseEntity.ok(topicService.getTopic(id));
+        return ResponseEntity.ok(new ApiResponse<>(topicService.getTopic(id), "Topic retrieved successfully"));
     }
 
     @GetMapping("/title/{title}")
-    public ResponseEntity<TopicDTO> getTopicByTitle(@PathVariable String title) {
+    public ResponseEntity<ApiResponse<TopicDTO>> getTopicByTitle(@PathVariable String title) {
         TopicDTO topic = topicService.getTopicByTitle(title);
         topicService.incrementViewCount(topic.getId());
-        return ResponseEntity.ok(topic);
+        return ResponseEntity.ok(new ApiResponse<>(topic, "Topic retrieved successfully"));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TopicDTO> updateTopic(
+    public ResponseEntity<ApiResponse<TopicDTO>> updateTopic(
             @PathVariable Long id,
             @RequestParam(required = false) String description,
             @RequestParam(required = false) Set<String> tags) {
-        return ResponseEntity.ok(topicService.updateTopic(id, description, tags));
+        return ResponseEntity.ok(new ApiResponse<>(topicService.updateTopic(id, description, tags), "Topic updated successfully"));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTopic(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteTopic(@PathVariable Long id) {
         topicService.deleteTopic(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(new ApiResponse<>(null, "Topic deleted successfully"));
     }
 
     @GetMapping("/latest")
-    public ResponseEntity<Page<TopicDTO>> getLatestTopics(
+    public ResponseEntity<ApiResponse<Page<TopicDTO>>> getLatestTopics(
             @PageableDefault(size = 20, sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(topicService.getLatestTopics(pageable));
+        return ResponseEntity.ok(new ApiResponse<>(topicService.getLatestTopics(pageable), "Latest topics retrieved successfully"));
     }
 
     @GetMapping("/popular")
-    public ResponseEntity<Page<TopicDTO>> getPopularTopics(
+    public ResponseEntity<ApiResponse<Page<TopicDTO>>> getPopularTopics(
             @PageableDefault(size = 20, sort = "entryCount", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(topicService.getPopularTopics(pageable));
+        return ResponseEntity.ok(new ApiResponse<>(topicService.getPopularTopics(pageable), "Popular topics retrieved successfully"));
     }
 
     @GetMapping("/most-viewed")
-    public ResponseEntity<Page<TopicDTO>> getMostViewedTopics(
+    public ResponseEntity<ApiResponse<Page<TopicDTO>>> getMostViewedTopics(
             @PageableDefault(size = 20, sort = "viewCount", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(topicService.getMostViewedTopics(pageable));
+        return ResponseEntity.ok(new ApiResponse<>(topicService.getMostViewedTopics(pageable), "Most viewed topics retrieved successfully"));
     }
     
     @GetMapping("/tag/{tagName}")
-    public ResponseEntity<Page<TopicDTO>> getTopicsByTag(
+    public ResponseEntity<ApiResponse<Page<TopicDTO>>> getTopicsByTag(
             @PathVariable String tagName,
             @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(topicService.getTopicsByTag(tagName, pageable));
+        return ResponseEntity.ok(new ApiResponse<>(topicService.getTopicsByTag(tagName, pageable), "Topics by tag retrieved successfully"));
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Page<TopicDTO>> searchTopics(
+    public ResponseEntity<ApiResponse<Page<TopicDTO>>> searchTopics(
             @RequestParam String query,
             @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(topicService.searchTopics(query, pageable));
+        return ResponseEntity.ok(new ApiResponse<>(topicService.searchTopics(query, pageable), "Search results retrieved successfully"));
     }
 }

@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import in.batur.eksiclone.entity.entry.Entry;
 import in.batur.eksiclone.entity.entry.Topic;
-import in.batur.eksiclone.entity.user.User;
 import in.batur.eksiclone.repository.BaseRepository;
 
 import java.util.List;
@@ -21,7 +20,7 @@ public interface EntryRepository extends JpaRepository<Entry, Long>, BaseReposit
     
     Page<Entry> findByTopicAndIsDeletedFalseOrderByCreatedDateDesc(Topic topic, Pageable pageable);
     
-    Page<Entry> findByAuthorAndIsDeletedFalseOrderByCreatedDateDesc(User author, Pageable pageable);
+    Page<Entry> findByAuthorIdAndIsDeletedFalseOrderByCreatedDateDesc(Long authorId, Pageable pageable);
     
     Page<Entry> findByIsDeletedFalseOrderByCreatedDateDesc(Pageable pageable);
     

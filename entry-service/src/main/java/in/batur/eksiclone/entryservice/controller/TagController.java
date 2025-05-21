@@ -1,5 +1,6 @@
 package in.batur.eksiclone.entryservice.controller;
 
+import in.batur.eksiclone.entryservice.dto.ApiResponse;
 import in.batur.eksiclone.entryservice.dto.CreateTagRequest;
 import in.batur.eksiclone.entryservice.dto.TagDTO;
 import in.batur.eksiclone.entryservice.service.TagService;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/tags")
+@RequestMapping("/api/v1/tags")
 public class TagController {
 
     private final TagService tagService;
@@ -26,47 +27,49 @@ public class TagController {
     }
 
     @PostMapping
-    public ResponseEntity<TagDTO> createTag(@RequestBody @Validated CreateTagRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(tagService.createTag(request));
+    public ResponseEntity<ApiResponse<TagDTO>> createTag(@RequestBody @Validated CreateTagRequest request) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(new ApiResponse<>(tagService.createTag(request), "Tag created successfully"));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TagDTO> getTag(@PathVariable Long id) {
-        return ResponseEntity.ok(tagService.getTag(id));
+    public ResponseEntity<ApiResponse<TagDTO>> getTag(@PathVariable Long id) {
+        return ResponseEntity.ok(new ApiResponse<>(tagService.getTag(id), "Tag retrieved successfully"));
     }
 
     @GetMapping("/name/{name}")
-    public ResponseEntity<TagDTO> getTagByName(@PathVariable String name) {
-        return ResponseEntity.ok(tagService.getTagByName(name));
+    public ResponseEntity<ApiResponse<TagDTO>> getTagByName(@PathVariable String name) {
+        return ResponseEntity.ok(new ApiResponse<>(tagService.getTagByName(name), "Tag retrieved successfully"));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TagDTO> updateTag(
+    public ResponseEntity<ApiResponse<TagDTO>> updateTag(
             @PathVariable Long id,
             @RequestBody @Validated CreateTagRequest request) {
-        return ResponseEntity.ok(tagService.updateTag(id, request));
+        return ResponseEntity.ok(new ApiResponse<>(tagService.updateTag(id, request), "Tag updated successfully"));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTag(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteTag(@PathVariable Long id) {
         tagService.deleteTag(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(new ApiResponse<>(null, "Tag deleted successfully"));
     }
 
     @GetMapping
-    public ResponseEntity<Page<TagDTO>> getAllTags(
+    public ResponseEntity<ApiResponse<Page<TagDTO>>> getAllTags(
             @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
-        return ResponseEntity.ok(tagService.getAllTags(pageable));
+        return ResponseEntity.ok(new ApiResponse<>(tagService.getAllTags(pageable), "Tags retrieved successfully"));
     }
 
     @GetMapping("/popular")
-    public ResponseEntity<Page<TagDTO>> getPopularTags(
+    public ResponseEntity<ApiResponse<Page<TagDTO>>> getPopularTags(
             @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(tagService.getPopularTags(pageable));
+        return ResponseEntity.ok(new ApiResponse<>(tagService.getPopularTags(pageable), "Popular tags retrieved successfully"));
     }
 
     @GetMapping("/topic/{topicId}")
-    public ResponseEntity<List<TagDTO>> getTagsByTopicId(@PathVariable Long topicId) {
-        return ResponseEntity.ok(tagService.getTagsByTopicId(topicId));
+    public ResponseEntity<ApiResponse<List<TagDTO>>> getTagsByTopicId(@PathVariable Long topicId) {
+        return ResponseEntity.ok(new ApiResponse<>(tagService.getTagsByTopicId(topicId), "Topic tags retrieved successfully"));
     }
 }

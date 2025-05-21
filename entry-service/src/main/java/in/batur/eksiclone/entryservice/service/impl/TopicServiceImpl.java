@@ -8,7 +8,6 @@ import in.batur.eksiclone.entryservice.mapper.TopicMapper;
 import in.batur.eksiclone.entryservice.service.TopicService;
 import in.batur.eksiclone.repository.entry.TagRepository;
 import in.batur.eksiclone.repository.entry.TopicRepository;
-import in.batur.eksiclone.repository.user.UserRepository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,17 +23,14 @@ public class TopicServiceImpl implements TopicService {
 
     private final TopicRepository topicRepository;
     private final TagRepository tagRepository;
-    private final UserRepository userRepository;
     private final TopicMapper topicMapper;
 
     public TopicServiceImpl(
             TopicRepository topicRepository, 
-            TagRepository tagRepository, 
-            UserRepository userRepository,
+            TagRepository tagRepository,
             TopicMapper topicMapper) {
         this.topicRepository = topicRepository;
         this.tagRepository = tagRepository;
-        this.userRepository = userRepository;
         this.topicMapper = topicMapper;
     }
 
@@ -48,15 +44,12 @@ public class TopicServiceImpl implements TopicService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic with this title already exists");
         }
         
-        // Validate author exists - but we don't need to store the reference here since
-        // the first entry with this author will be created elsewhere
-        userRepository.findById(request.getAuthorId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        
         // Create and setup topic
         Topic topic = new Topic();
         topic.setTitle(request.getTitle());
         topic.setDescription(request.getDescription());
+        topic.setCreatorId(request.getCreatorId());
+        topic.setCreatorUsername(request.getCreatorUsername());
         
         // Handle tags if present
         if (request.getTags() != null && !request.getTags().isEmpty()) {
@@ -74,8 +67,12 @@ public class TopicServiceImpl implements TopicService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Title is required");
         }
         
-        if (request.getAuthorId() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Author ID is required");
+        if (request.getCreatorId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Creator ID is required");
+        }
+        
+        if (request.getCreatorUsername() == null || request.getCreatorUsername().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Creator username is required");
         }
     }
 

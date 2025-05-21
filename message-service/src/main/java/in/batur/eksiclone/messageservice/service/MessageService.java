@@ -1,32 +1,33 @@
 package in.batur.eksiclone.messageservice.service;
+
+import in.batur.eksiclone.messageservice.dto.CreateMessageRequest;
+import in.batur.eksiclone.messageservice.dto.MessageDTO;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 
-import in.batur.eksiclone.messageservice.dto.ConversationDTO;
-import in.batur.eksiclone.messageservice.dto.MessageDTO;
-import in.batur.eksiclone.messageservice.dto.SendMessageRequest;
-
 public interface MessageService {
-    MessageDTO sendMessage(SendMessageRequest request);
+    MessageDTO sendMessage(CreateMessageRequest request);
     
     MessageDTO getMessage(Long id);
     
-    List<MessageDTO> getConversation(Long userId1, Long userId2);
+    void deleteMessageForSender(Long messageId, Long senderId);
     
-    Page<MessageDTO> getConversationPaged(Long userId1, Long userId2, Pageable pageable);
+    void deleteMessageForReceiver(Long messageId, Long receiverId);
     
-    List<ConversationDTO> getUserConversations(Long userId);
+    MessageDTO markAsRead(Long messageId);
     
-    Page<ConversationDTO> getUserConversationsPaged(Long userId, Pageable pageable);
+    Page<MessageDTO> getSentMessages(Long senderId, Pageable pageable);
     
-    MessageDTO markAsRead(Long id);
+    Page<MessageDTO> getReceivedMessages(Long receiverId, Pageable pageable);
     
-    void markConversationAsRead(Long userId1, Long userId2);
+    Page<MessageDTO> getConversation(Long userId1, Long userId2, Pageable pageable);
     
-    void deleteMessage(Long id);
+    long getUnreadMessageCount(Long receiverId);
     
-    void deleteConversation(Long userId1, Long userId2);
+    List<MessageDTO> getLatestMessagesByUser(Long userId, int limit);
     
-    Long countUnreadMessages(Long userId);
+    List<Long> getMessageContacts(Long userId);
 }

@@ -1,0 +1,276 @@
+version: '3.8'
+
+services:
+  # Infrastructure Services
+  eureka-server:
+    build: ./eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - eksiclone-network
+    environment:
+      - EUREKA_CLIENT_REGISTER-WITH-EUREKA=false
+      - EUREKA_CLIENT_FETCH-REGISTRY=false
+
+  config-server:
+    build: ./config-server
+    ports:
+      - "8762:8762"
+    depends_on:
+      - eureka-server
+    networks:
+      - eksiclone-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_CLOUD_CONFIG_SERVER_GIT_URI=https://github.com/aqui/eksiclone-config.git
+
+  gateway:
+    build: ./gateway
+    ports:
+      - "8763:8763"
+    depends_on:
+      - eureka-server
+      - config-server
+    networks:
+      - eksiclone-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8762
+
+  # Domain Services
+  user-service:
+    build: ./user-service
+    ports:
+      - "8764:8764"
+    depends_on:
+      - eureka-server
+      - config-server
+      - mysql
+    networks:
+      - eksiclone-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8762
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/eksiuser?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=eksiuser_admin
+      - SPRING_DATASOURCE_PASSWORD=user_password_123
+
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "8765:8765"
+    depends_on:
+      - eureka-server
+      - config-server
+      - mysql
+    networks:
+      - eksiclone-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8762
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/eksiuser?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=eksiuser_admin
+      - SPRING_DATASOURCE_PASSWORD=user_password_123
+
+  entry-service:
+    build: ./entry-service
+    ports:
+      - "8767:8767"
+    depends_on:
+      - eureka-server
+      - config-server
+      - mysql
+    networks:
+      - eksiclone-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8762
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/eksiuser?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=eksiuser_admin
+      - SPRING_DATASOURCE_PASSWORD=user_password_123
+
+  favorite-service:
+    build: ./favorite-service
+    ports:
+      - "8768:8768"
+    depends_on:
+      - eureka-server
+      - config-server
+      - mysql
+    networks:
+      - eksiclone-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8762
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/eksiuser?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=eksiuser_admin
+      - SPRING_DATASOURCE_PASSWORD=user_password_123
+
+  notification-service:
+    build: ./notification-service
+    ports:
+      - "8769:8769"
+    depends_on:
+      - eureka-server
+      - config-server
+      - mysql
+      - rabbitmq
+    networks:
+      - eksiclone-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8762
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/eksiuser?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=eksiuser_admin
+      - SPRING_DATASOURCE_PASSWORD=user_password_123
+
+  message-service:
+    build: ./message-service
+    ports:
+      - "8770:8770"
+    depends_on:
+      - eureka-server
+      - config-server
+      - mysql
+    networks:
+      - eksiclone-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8762
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/eksiuser?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=eksiuser_admin
+      - SPRING_DATASOURCE_PASSWORD=user_password_123
+
+  search-service:
+    build: ./search-service
+    ports:
+      - "8771:8771"
+    depends_on:
+      - eureka-server
+      - config-server
+      - mysql
+    networks:
+      - eksiclone-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8762
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/eksiuser?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=eksiuser_admin
+      - SPRING_DATASOURCE_PASSWORD=user_password_123
+
+  statistics-service:
+    build: ./statistics-service
+    ports:
+      - "8772:8772"
+    depends_on:
+      - eureka-server
+      - config-server
+      - mysql
+    networks:
+      - eksiclone-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8762
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/eksiuser?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=eksiuser_admin
+      - SPRING_DATASOURCE_PASSWORD=user_password_123
+
+  moderation-service:
+    build: ./moderation-service
+    ports:
+      - "8773:8773"
+    depends_on:
+      - eureka-server
+      - config-server
+      - mysql
+    networks:
+      - eksiclone-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8762
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/eksiuser?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=eksiuser_admin
+      - SPRING_DATASOURCE_PASSWORD=user_password_123
+
+  recommendation-service:
+    build: ./recommendation-service
+    ports:
+      - "8774:8774"
+    depends_on:
+      - eureka-server
+      - config-server
+      - mysql
+    networks:
+      - eksiclone-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8762
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/eksiuser?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=eksiuser_admin
+      - SPRING_DATASOURCE_PASSWORD=user_password_123
+
+  file-service:
+    build: ./file-service
+    ports:
+      - "8775:8775"
+    depends_on:
+      - eureka-server
+      - config-server
+      - mysql
+    networks:
+      - eksiclone-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8762
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/eksiuser?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=eksiuser_admin
+      - SPRING_DATASOURCE_PASSWORD=user_password_123
+    volumes:
+      - file-uploads:/app/uploads
+
+  # Bağımlılıklar (Dependencies)
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=eksiuser
+      - MYSQL_USER=eksiuser_admin
+      - MYSQL_PASSWORD=user_password_123
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - eksiclone-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    ports:
+      - "5672:5672"   # AMQP protocol port
+      - "15672:15672" # Management interface port
+    environment:
+      - RABBITMQ_DEFAULT_USER=eksiclone
+      - RABBITMQ_DEFAULT_PASS=eksiclone_password
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - eksiclone-network
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  mysql-data:
+  rabbitmq-data:
+  file-uploads:
+
+networks:
+  eksiclone-network:
+    driver: bridge

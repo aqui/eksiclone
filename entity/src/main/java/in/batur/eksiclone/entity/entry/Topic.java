@@ -43,6 +43,13 @@ public class Topic extends BaseEntity {
     @Column(name = "view_count")
     private int viewCount = 0;
     
+    // User dependency removed, instead just store creator info
+    @Column(name = "creator_id")
+    private Long creatorId;
+    
+    @Column(name = "creator_username")
+    private String creatorUsername;
+    
     private boolean isDeleted = false;
     
     public void addEntry(Entry entry) {

@@ -19,8 +19,10 @@ public class TopicDTO {
     private String description;
     private int entryCount;
     private int viewCount;
+    private Long creatorId;
+    private String creatorUsername;
     private Set<String> tags;
-    private List<EntryPreviewDTO> recentEntries; // Son entry'ler eklendi
+    private List<EntryPreviewDTO> recentEntries;
     private LocalDateTime createdDate;
     private LocalDateTime lastUpdatedDate;
 }

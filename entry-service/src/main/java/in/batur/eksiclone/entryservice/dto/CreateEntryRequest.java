@@ -24,5 +24,8 @@ public class CreateEntryRequest {
     @NotNull(message = "Author ID is required")
     private Long authorId;
     
+    @NotBlank(message = "Author username is required")
+    private String authorUsername;
+    
     private Set<String> tags;
 }

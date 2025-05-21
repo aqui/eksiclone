@@ -16,6 +16,8 @@ public class FavoriteDTO {
     private Long userId;
     private String username;
     private Long entryId;
-    private String entryPreview;
+    private String entryContent;
+    private Long topicId;
+    private String topicTitle;
     private LocalDateTime createdDate;
 }

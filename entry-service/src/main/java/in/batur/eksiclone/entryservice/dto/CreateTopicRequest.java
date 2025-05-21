@@ -20,8 +20,11 @@ public class CreateTopicRequest {
     
     private String description;
     
-    @NotNull(message = "Author ID is required")
-    private Long authorId;
+    @NotNull(message = "Creator ID is required")
+    private Long creatorId;
+    
+    @NotBlank(message = "Creator username is required")
+    private String creatorUsername;
     
     private Set<String> tags;
 }

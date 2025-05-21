@@ -1,27 +1,25 @@
 package in.batur.eksiclone.favoriteservice.service;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import java.util.List;
 
 import in.batur.eksiclone.favoriteservice.dto.CreateFavoriteRequest;
 import in.batur.eksiclone.favoriteservice.dto.FavoriteDTO;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.util.List;
+
 public interface FavoriteService {
-    FavoriteDTO createFavorite(CreateFavoriteRequest request);
+    FavoriteDTO addFavorite(CreateFavoriteRequest request);
     
-    void deleteFavorite(Long id);
+    void removeFavorite(Long userId, Long entryId);
     
-    void deleteFavoriteByUserAndEntry(Long userId, Long entryId);
+    boolean isFavorite(Long userId, Long entryId);
     
-    boolean checkFavorite(Long userId, Long entryId);
+    Page<FavoriteDTO> getUserFavorites(Long userId, Pageable pageable);
     
-    List<FavoriteDTO> getFavoritesByUser(Long userId);
+    Page<FavoriteDTO> getEntryFavorites(Long entryId, Pageable pageable);
     
-    Page<FavoriteDTO> getFavoritesByUserPaged(Long userId, Pageable pageable);
+    long countEntryFavorites(Long entryId);
     
-    List<FavoriteDTO> getFavoritesByEntry(Long entryId);
-    
-    Page<FavoriteDTO> getFavoritesByEntryPaged(Long entryId, Pageable pageable);
-    
-    Long countFavoritesByEntry(Long entryId);
+    List<Long> getUserFavoriteEntryIds(Long userId);
 }

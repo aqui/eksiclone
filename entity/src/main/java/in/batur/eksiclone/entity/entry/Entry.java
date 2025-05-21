@@ -1,7 +1,6 @@
 package in.batur.eksiclone.entity.entry;
 
 import in.batur.eksiclone.entity.BaseEntity;
-import in.batur.eksiclone.entity.user.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,10 +24,13 @@ public class Entry extends BaseEntity {
     @JsonIgnoreProperties("entries")
     private Topic topic;
     
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "author_id", nullable = false)
-    @JsonIgnoreProperties({"roles", "entries"})
-    private User author;
+    // User entity bağımlılığını kaldırıp sadece ID tutuyoruz
+    @Column(name = "author_id", nullable = false)
+    private Long authorId;
+    
+    // Referans olarak kullanılabilecek username bilgisi
+    @Column(name = "author_username")
+    private String authorUsername;
     
     @Column(name = "favorite_count")
     private int favoriteCount = 0;

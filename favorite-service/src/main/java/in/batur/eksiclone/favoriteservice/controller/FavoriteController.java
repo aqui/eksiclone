@@ -1,23 +1,23 @@
 package in.batur.eksiclone.favoriteservice.controller;
-import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 
 import in.batur.eksiclone.favoriteservice.dto.ApiResponse;
 import in.batur.eksiclone.favoriteservice.dto.CreateFavoriteRequest;
 import in.batur.eksiclone.favoriteservice.dto.FavoriteDTO;
 import in.batur.eksiclone.favoriteservice.service.FavoriteService;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/favorites")
+@RequestMapping("/api/v1/favorites")
 public class FavoriteController {
 
     private final FavoriteService favoriteService;
@@ -27,66 +27,58 @@ public class FavoriteController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<FavoriteDTO>> createFavorite(@RequestBody @Valid CreateFavoriteRequest request) {
-        FavoriteDTO favorite = favoriteService.createFavorite(request);
+    public ResponseEntity<ApiResponse<FavoriteDTO>> addFavorite(@RequestBody @Validated CreateFavoriteRequest request) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(new ApiResponse<>(favorite, "Favorite created successfully"));
+                .body(new ApiResponse<>(favoriteService.addFavorite(request), "Entry added to favorites"));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteFavorite(@PathVariable Long id) {
-        favoriteService.deleteFavorite(id);
-        return ResponseEntity.ok(new ApiResponse<>(null, "Favorite deleted successfully"));
-    }
-
-    @DeleteMapping("/user/{userId}/entry/{entryId}")
-    public ResponseEntity<ApiResponse<Void>> deleteFavoriteByUserAndEntry(
+    @DeleteMapping("/{userId}/{entryId}")
+    public ResponseEntity<ApiResponse<Void>> removeFavorite(
             @PathVariable Long userId,
             @PathVariable Long entryId) {
-        favoriteService.deleteFavoriteByUserAndEntry(userId, entryId);
-        return ResponseEntity.ok(new ApiResponse<>(null, "Favorite deleted successfully"));
+        favoriteService.removeFavorite(userId, entryId);
+        return ResponseEntity.ok(new ApiResponse<>(null, "Entry removed from favorites"));
     }
 
-    @GetMapping("/check/user/{userId}/entry/{entryId}")
-    public ResponseEntity<ApiResponse<Boolean>> checkFavorite(
+    @GetMapping("/check/{userId}/{entryId}")
+    public ResponseEntity<ApiResponse<Boolean>> isFavorite(
             @PathVariable Long userId,
             @PathVariable Long entryId) {
-        boolean isFavorited = favoriteService.checkFavorite(userId, entryId);
-        return ResponseEntity.ok(new ApiResponse<>(isFavorited, "Favorite status retrieved"));
+        return ResponseEntity.ok(new ApiResponse<>(
+                favoriteService.isFavorite(userId, entryId),
+                "Favorite status retrieved"));
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<ApiResponse<List<FavoriteDTO>>> getFavoritesByUser(@PathVariable Long userId) {
-        List<FavoriteDTO> favorites = favoriteService.getFavoritesByUser(userId);
-        return ResponseEntity.ok(new ApiResponse<>(favorites, "Favorites retrieved successfully"));
-    }
-
-    @GetMapping("/user/{userId}/paged")
-    public ResponseEntity<ApiResponse<Page<FavoriteDTO>>> getFavoritesByUserPaged(
+    public ResponseEntity<ApiResponse<Page<FavoriteDTO>>> getUserFavorites(
             @PathVariable Long userId,
             @PageableDefault(size = 20, sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<FavoriteDTO> favoritesPage = favoriteService.getFavoritesByUserPaged(userId, pageable);
-        return ResponseEntity.ok(new ApiResponse<>(favoritesPage, "Favorites retrieved successfully"));
+        return ResponseEntity.ok(new ApiResponse<>(
+                favoriteService.getUserFavorites(userId, pageable),
+                "User favorites retrieved"));
     }
 
     @GetMapping("/entry/{entryId}")
-    public ResponseEntity<ApiResponse<List<FavoriteDTO>>> getFavoritesByEntry(@PathVariable Long entryId) {
-        List<FavoriteDTO> favorites = favoriteService.getFavoritesByEntry(entryId);
-        return ResponseEntity.ok(new ApiResponse<>(favorites, "Favorites retrieved successfully"));
-    }
-
-    @GetMapping("/entry/{entryId}/paged")
-    public ResponseEntity<ApiResponse<Page<FavoriteDTO>>> getFavoritesByEntryPaged(
+    public ResponseEntity<ApiResponse<Page<FavoriteDTO>>> getEntryFavorites(
             @PathVariable Long entryId,
             @PageableDefault(size = 20, sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<FavoriteDTO> favoritesPage = favoriteService.getFavoritesByEntryPaged(entryId, pageable);
-        return ResponseEntity.ok(new ApiResponse<>(favoritesPage, "Favorites retrieved successfully"));
+        return ResponseEntity.ok(new ApiResponse<>(
+                favoriteService.getEntryFavorites(entryId, pageable),
+                "Entry favorites retrieved"));
     }
 
-    @GetMapping("/count/entry/{entryId}")
-    public ResponseEntity<ApiResponse<Long>> countFavoritesByEntry(@PathVariable Long entryId) {
-        Long count = favoriteService.countFavoritesByEntry(entryId);
-        return ResponseEntity.ok(new ApiResponse<>(count, "Favorite count retrieved successfully"));
+    @GetMapping("/count/{entryId}")
+    public ResponseEntity<ApiResponse<Long>> countEntryFavorites(@PathVariable Long entryId) {
+        return ResponseEntity.ok(new ApiResponse<>(
+                favoriteService.countEntryFavorites(entryId),
+                "Favorite count retrieved"));
+    }
+
+    @GetMapping("/user/{userId}/entry-ids")
+    public ResponseEntity<ApiResponse<List<Long>>> getUserFavoriteEntryIds(@PathVariable Long userId) {
+        return ResponseEntity.ok(new ApiResponse<>(
+                favoriteService.getUserFavoriteEntryIds(userId),
+                "Favorite entry IDs retrieved"));
     }
 }

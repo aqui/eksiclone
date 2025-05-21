@@ -3,7 +3,6 @@ package in.batur.eksiclone.entryservice.service.impl;
 import in.batur.eksiclone.entity.entry.Entry;
 import in.batur.eksiclone.entity.entry.Tag;
 import in.batur.eksiclone.entity.entry.Topic;
-import in.batur.eksiclone.entity.user.User;
 import in.batur.eksiclone.entryservice.dto.CreateEntryRequest;
 import in.batur.eksiclone.entryservice.dto.EntryDTO;
 import in.batur.eksiclone.entryservice.mapper.EntryMapper;
@@ -12,7 +11,6 @@ import in.batur.eksiclone.entryservice.util.TagNormalizer;
 import in.batur.eksiclone.repository.entry.EntryRepository;
 import in.batur.eksiclone.repository.entry.TagRepository;
 import in.batur.eksiclone.repository.entry.TopicRepository;
-import in.batur.eksiclone.repository.user.UserRepository;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -32,7 +30,6 @@ public class EntryServiceImpl implements EntryService {
 
     private final EntryRepository entryRepository;
     private final TopicRepository topicRepository;
-    private final UserRepository userRepository;
     private final TagRepository tagRepository;
     private final EntryMapper entryMapper;
     private final TagNormalizer tagNormalizer;
@@ -40,13 +37,11 @@ public class EntryServiceImpl implements EntryService {
     public EntryServiceImpl(
             EntryRepository entryRepository, 
             TopicRepository topicRepository, 
-            UserRepository userRepository, 
             TagRepository tagRepository,
             EntryMapper entryMapper,
             TagNormalizer tagNormalizer) {
         this.entryRepository = entryRepository;
         this.topicRepository = topicRepository;
-        this.userRepository = userRepository;
         this.tagRepository = tagRepository;
         this.entryMapper = entryMapper;
         this.tagNormalizer = tagNormalizer;
@@ -65,14 +60,12 @@ public class EntryServiceImpl implements EntryService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot create entry for a deleted topic");
         }
         
-        // Find author
-        User author = findUserById(request.getAuthorId());
-        
         // Create and setup entry
         Entry entry = new Entry();
         entry.setContent(request.getContent());
         entry.setTopic(topic);
-        entry.setAuthor(author);
+        entry.setAuthorId(request.getAuthorId());
+        entry.setAuthorUsername(request.getAuthorUsername());
         
         // Handle tags if present
         if (request.getTags() != null && !request.getTags().isEmpty()) {
@@ -102,6 +95,10 @@ public class EntryServiceImpl implements EntryService {
         if (request.getAuthorId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Author ID is required");
         }
+        
+        if (request.getAuthorUsername() == null || request.getAuthorUsername().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Author username is required");
+        }
     }
     
     private Topic findTopicById(Long id) {
@@ -109,9 +106,9 @@ public class EntryServiceImpl implements EntryService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
     }
     
-    private User findUserById(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    private Entry findEntryById(Long id) {
+        return entryRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Entry not found"));
     }
     
     private Set<String> normalizeTagSet(Set<String> tagNames) {
@@ -143,11 +140,6 @@ public class EntryServiceImpl implements EntryService {
         }
         
         return entryMapper.toDto(entry);
-    }
-    
-    private Entry findEntryById(Long id) {
-        return entryRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Entry not found"));
     }
 
     @Override
@@ -216,9 +208,7 @@ public class EntryServiceImpl implements EntryService {
     @Transactional(readOnly = true)
     @Cacheable(value = "entries", key = "'byAuthor:' + #authorId + ':' + #pageable")
     public Page<EntryDTO> getEntriesByAuthor(Long authorId, Pageable pageable) {
-        User author = findUserById(authorId);
-        
-        return entryRepository.findByAuthorAndIsDeletedFalseOrderByCreatedDateDesc(author, pageable)
+        return entryRepository.findByAuthorIdAndIsDeletedFalseOrderByCreatedDateDesc(authorId, pageable)
                 .map(entryMapper::toDto);
     }
 

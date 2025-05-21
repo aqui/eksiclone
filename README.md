@@ -1,118 +1,168 @@
-# Eksiclone Microservices Application
+# Ekşi Sözlük Klonu Mikroservis Mimarisi Dönüşüm Planı
 
-## Proje Özeti
-Eksiclone, Java ve Spring Boot kullanılarak geliştirilmiş mikroservis mimarisine sahip bir forum uygulamasıdır. Kullanıcıların kayıt olup giriş yapabileceği, rollerle yetkilendirileceği ve içerik paylaşabileceği bir platform sunar.
+Bu belge, Ekşi Sözlük klonunun mevcut paylaşımlı modüller yapısından, izole edilmiş mikroservis mimarisine dönüştürülmesi için adım adım planı içermektedir.
 
-## Teknolojiler
-- Java 21
-- Spring Boot 3.4.5
-- Spring Cloud 2024.0.1
-- Spring Security
-- JWT (JSON Web Token)
-- MariaDB
-- RabbitMQ
-- Flyway Migration
-- Lombok
-- MapStruct
-- Springdoc OpenAPI
+## 1. Mevcut Mimari Sorunları
 
-## Proje Mimarisi
+- Entity ve repository modülleri tüm servisler tarafından paylaşılıyor
+- Servisler arasında yüksek bağımlılık (tight coupling) var
+- Her servis başlatıldığında tüm entity'ler taranıyor ve tablolar oluşturuluyor
+- Veri izolasyonu yok, bir servis diğer servisin veritabanına doğrudan erişebiliyor
 
-### Modüller
-- **entity**: Veritabanı entity sınıfları
-- **repository**: JPA repository sınıfları
-- **security**: JWT güvenlik yapılandırması ve kontrolleri
-- **user-service**: Kullanıcı yönetimi servisi
-- **role-service**: Rol yönetimi servisi
-- **gateway**: API Gateway
-- **eureka-server**: Service discovery server
-- **config-server**: Merkezi yapılandırma sunucusu
+## 2. Hedef Mimari Prensipleri
 
-## Başlatma Sırası
-1. **eureka-server**: Service discovery için
-2. **config-server**: Merkezi yapılandırma servisi için
-3. **user-service**, **role-service**: Temel servisler
-4. **gateway**: API Gateway
+### Domain-Driven Design (DDD) Yaklaşımı
+- Her mikroservis kendi bounded context'ine sahip
+- Her servis kendi veri modelini (entity) yönetiyor
+- Servisler arası gevşek bağlantı (loose coupling)
 
-## Proje Yapılandırması
+### Veri İzolasyonu (Database per Service)
+- Her servis kendi veritabanını kullanır
+- Servisler birbirlerinin veritabanlarına doğrudan erişemez
 
-### Çevresel Değişkenler
-Proje aşağıdaki çevresel değişkenlere ihtiyaç duyar:
+### Servisler Arası İletişim
+- Senkron iletişim: REST API (OpenFeign)
+- Asenkron iletişim: Message Queue (RabbitMQ)
 
-```properties
-# Config Server
-CONFIG_SERVER_URL=http://localhost:8888
+## 3. Hedef Proje Yapısı
 
-# Eureka Server
-EUREKA_SERVER_URL=http://localhost:8761/eureka/
-
-# RabbitMQ
-RABBITMQ_HOST=localhost
-RABBITMQ_PORT=5672
-RABBITMQ_USERNAME=eksiclone
-RABBITMQ_PASSWORD=eksiclone_password
-
-# Veritabanı (service'lerde)
-SPRING_DATASOURCE_URL=jdbc:mariadb://localhost:3306/eksidb
-SPRING_DATASOURCE_USERNAME=eksiuser
-SPRING_DATASOURCE_PASSWORD=eksipassword
-
-# JWT
-JWT_SECRET=your-secret-key
-JWT_EXPIRATION=86400000
-JWT_REFRESH_EXPIRATION=604800000
-
-# Varsayılan Şifreler (Sadece ilk kurulumda kullanılır)
-DEFAULT_ADMIN_PASSWORD=admin123
-DEFAULT_MODERATOR_PASSWORD=moderator123
-DEFAULT_USER_PASSWORD=user123
+```
+eksiclone/
+│
+├── common/                              # Ortak bileşenler
+│   ├── common-dto/                      # Servisler arası DTO'lar
+│   └── common-util/                     # Ortak utility sınıfları
+│
+├── infrastructure/                      # Altyapı servisleri  
+│   ├── api-gateway/                     # API Gateway
+│   ├── discovery-service/               # Eureka Service
+│   └── config-server/                   # Config Service
+│
+├── domain-services/                     # Domain servisleri  
+│   ├── user-service/                    # Kullanıcı yönetimi
+│   │   ├── src/main/java/
+│   │   │   └── in.batur.eksiclone.user/
+│   │   │       ├── api/                 # Controller'lar
+│   │   │       ├── config/              # Konfigürasyonlar
+│   │   │       ├── domain/              # Entity sınıfları
+│   │   │       ├── dto/                 # DTO sınıfları
+│   │   │       ├── exception/           # Exception'lar
+│   │   │       ├── mapper/              # Dönüşümler
+│   │   │       ├── repository/          # Repository'ler
+│   │   │       └── service/             # Servis katmanı
+│   │   └── pom.xml
+│   │
+│   ├── entry-service/                   # Entry yönetimi
+│   ├── topic-service/                   # Topic yönetimi
+│   ├── favorite-service/                # Favoriler
+│   ├── notification-service/            # Bildirimler
+│   ├── message-service/                 # Mesajlaşma
+│   ├── moderation-service/              # Moderasyon
+│   ├── file-service/                    # Dosyalar
+│   ├── auth-service/                    # Kimlik doğrulama
+│   ├── search-service/                  # Arama
+│   └── statistics-service/              # İstatistikler
+│
+└── pom.xml                              # Ana pom.xml
 ```
 
-## Güvenlik İyileştirmeleri
+## 4. Dönüşüm Aşamaları
 
-1. **JWT Anahtar Yönetimi**: Güvenli bir şekilde RSA anahtar çiftleriyle imzalama
-2. **Ortam Değişkenleri**: Hassas bilgiler ortam değişkenleri ile sağlanıyor
-3. **Şifre Güvenliği**: Şifreler BCrypt ile hashlenip saklanıyor
-4. **CORS/CSRF Yapılandırması**: Güvenli CORS ve CSRF yapılandırması
-5. **RabbitMQ İçin Mesaj Güvenliği**: Mesaj içerikleri şifreleniyor
+### Aşama 1: Proje Yapısını Değiştirme
+- [x] Yeni proje yapısını oluştur
+- [ ] Mevcut modülleri yeni yapıya uygun şekilde taşı
+- [ ] Ortak utility sınıfları oluştur
 
-## API Dokümantasyonu
-Swagger UI ile erişilebilir:
-- Gateway: `http://localhost:8080/swagger-ui.html`
-- User Service: `http://localhost:8081/swagger-ui.html`
-- Role Service: `http://localhost:8082/swagger-ui.html`
+### Aşama 2: Domain Modellerini Ayrıştırma
+- [ ] Her servis için domain entity'lerini ayrı paketlere taşı
+- [ ] Entity'lerdeki dış referansları (diğer domain'lere ait) ID tabanlı yapıya dönüştür
+- [ ] Servislere özgü repository'leri oluştur
 
-## Geliştirme Ortamı Kurulumu
+### Aşama 3: Veritabanı İzolasyonu
+- [ ] Her servis için ayrı veritabanı oluştur
+- [ ] Veritabanı bağlantı ayarlarını güncelle
+- [ ] @EntityScan ve @EnableJpaRepositories anotasyonlarını her servise özgü olarak düzenle
 
-### Ön Koşullar
-- Java 21
-- Maven
-- Docker (RabbitMQ ve MariaDB için)
-- Git
+### Aşama 4: Servisler Arası İletişim
+- [ ] Ortak DTO'ları tanımla
+- [ ] OpenFeign ile REST istemcileri oluştur
+- [ ] RabbitMQ entegrasyonu ve event yapısını tanımla
 
-### RabbitMQ Kurulumu
-```bash
-docker run -d --name eksiclone-rabbitmq -p 5672:5672 -p 15672:15672 -e RABBITMQ_DEFAULT_USER=eksiclone -e RABBITMQ_DEFAULT_PASS=eksiclone_password rabbitmq:management
+### Aşama 5: API Gateway ve Service Discovery
+- [ ] API Gateway rotalarını düzenle
+- [ ] Service discovery entegrasyonunu test et
+- [ ] Güvenlik ve kimlik doğrulama ayarlarını yap
+
+### Aşama 6: Test ve Deployment
+- [ ] Her servisi ayrı ayrı test et
+- [ ] Entegrasyon testlerini çalıştır
+- [ ] Docker ve Docker Compose yapılandırmalarını güncelle
+
+## 5. Servis İletişim Şablonu Örnekleri
+
+### Örnek 1: Entry Oluşturma İşlemi
+1. Client, `entry-service`'e POST isteği yapar
+2. `entry-service` yeni entry'yi kaydeder
+3. `entry-service` bir "EntryCreatedEvent" yayınlar
+4. `notification-service` ve `statistics-service` bu olayı dinler ve gerekli işlemleri yapar
+
+### Örnek 2: Kullanıcı Bilgilerini Getirme
+1. `entry-service`, entryler için yazar bilgisine ihtiyaç duyar
+2. OpenFeign ile `user-service`'e HTTP isteği yapar
+3. `user-service` minimal kullanıcı bilgilerini (id, username, displayName) döndürür
+4. `entry-service` bu bilgileri DTO'suna ekler
+
+## 6. Entity Dönüşüm Örnekleri
+
+### Mevcut Entity İlişkisi
+```java
+// Entry.java - Mevcut
+@Entity
+public class Entry extends BaseEntity {
+    @ManyToOne
+    private User author;
+    // ...
+}
 ```
 
-### MariaDB Kurulumu
-```bash
-docker run -d --name eksiclone-mariadb -p 3306:3306 -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=eksidb -e MYSQL_USER=eksiuser -e MYSQL_PASSWORD=eksipassword mariadb:latest
+### Hedef Entity İlişkisi
+```java
+// Entry.java - Hedef
+@Entity
+public class Entry extends BaseEntity {
+    @Column(name = "author_id")
+    private Long authorId;
+    
+    @Column(name = "author_username")
+    private String authorUsername;
+    // ...
+}
 ```
 
-### JWT Anahtarlarını Oluşturma
-```bash
-mkdir -p ./keys
-openssl genrsa -out ./keys/private.key 2048
-openssl rsa -in ./keys/private.key -pubout -out ./keys/public.key
-```
+## 7. Mikroservis Best Practices
 
-### Projeyi Derleme ve Çalıştırma
-```bash
-mvn clean install
-cd eureka-server && mvn spring-boot:run
-cd config-server && mvn spring-boot:run
-cd user-service && mvn spring-boot:run
-cd role-service && mvn spring-boot:run
-cd gateway && mvn spring-boot:run
-```
+1. **Single Responsibility**: Her servis sadece bir iş yapar ve o konuda uzmanlaşır
+2. **Database per Service**: Her servis kendi veritabanını yönetir
+3. **Private Tables**: Hiçbir servis başka bir servisin tablolarına erişemez
+4. **API Composition**: Veri birleştirme işlemi API Gateway veya istemci tarafında yapılır
+5. **Event-Driven Communication**: Servisler arasında asenkron iletişim tercih edilir
+6. **Resilience**: Hata durumlarına karşı dayanıklılık (Circuit Breaker, Retry, Fallback)
+7. **Monitoring & Tracing**: Merkezi izleme ve dağıtık izleme sistemi
+
+## 8. Veri Tutarlılığı Stratejisi
+
+Mikroservis mimarisinde ACID yerine BASE (Basically Available, Soft state, Eventually consistent) yaklaşımı benimsenir:
+
+1. **Saga Pattern**: Dağıtık işlemler için telafi edici işlemler (compensating transactions)
+2. **Event Sourcing**: Durum değişikliklerini event olarak kaydetme
+3. **CQRS**: Command Query Responsibility Segregation
+
+## 9. İleriki Adımlar
+
+- [ ] CI/CD pipeline yapılandırması
+- [ ] Merkezi loglama sistemi
+- [ ] Performans izleme araçları
+- [ ] Otomatik ölçeklendirme yapılandırması
+- [ ] Servis mesh mimarisi (Istio)
+
+Bu dönüşüm planı takip edilerek, ekşi sözlük klonu uygulaması modern mikroservis mimarisine uygun hale getirilecektir. Her aşama tamamlandıkça, sistem daha izole, ölçeklenebilir ve yönetilebilir olacaktır.
